@@ -1,0 +1,4 @@
+#define MA_ENABLE_SPEEX_RESAMPLER
+#define MA_ENABLE_LIBSAMPLERATE
+#define MINIAUDIO_IMPLEMENTATION
+#include <syncwav/miniaudio.h>
