@@ -77,8 +77,8 @@ namespace swav {
 		}
 		auto& vec = globalContext->outputs;
 		auto remover = [&]() {
-			vec.erase(std::remove_if(vec.begin(), vec.end(),
-				[&](const auto& o) { return o.get() == output.get(); }), vec.end());
+			vec.erase(std::__remove_if(vec.begin(), vec.end(),
+				[&](const auto& o) { return (*o).get() == output.get(); }), vec.end());
 			};
 		if (!stopped) {
 			stop();

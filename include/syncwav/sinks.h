@@ -1,7 +1,7 @@
 #pragma once
 #include "miniaudio.h"
-#include <vector>
 #include "export.h"
+#include <thread>
 
 namespace swav {
 
