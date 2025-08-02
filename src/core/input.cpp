@@ -79,12 +79,11 @@ CaptureInput::CaptureInput(ma_device_id *id) : Input("Capture Input") {
   config.capture.format = globalContext.format;
   config.capture.channels = globalContext.channels;
   config.sampleRate = globalContext.sampleRate;
-  config.dataCallback = &LoopbackInput::staticLoopback;
+  config.dataCallback = &CaptureInput::staticLoopback;
   config.pUserData = this;
   config.periodSizeInFrames = globalContext.sampleRate / 100;
   // config.wasapi.noAutoConvertSRC = true;
 
-  ma_backend backends[] = {ma_backend_wasapi};
   ma_result result = ma_device_init(globalContext.maContext, &config, device);
   if (result != MA_SUCCESS) {
     log::e("Error while initializing input capture device");

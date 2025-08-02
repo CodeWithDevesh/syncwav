@@ -50,7 +50,7 @@ namespace swav {
 
 	SWAV_API std::vector<Device> getAllDevices() {
 		ma_context context;
-		ma_context_init(NULL, NULL, NULL, &context);
+		ma_context_init(NULL, 0, NULL, &context);
 
 		ma_device_info* captureInfo, * playbackInfo;
 		ma_uint32 captureCnt, playbackCnt;
