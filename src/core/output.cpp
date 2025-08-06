@@ -57,7 +57,7 @@ namespace swav {
 		config.playback.channels = globalContext.channels;
 		config.sampleRate = globalContext.sampleRate;
 		config.dataCallback = &LocalOutput::staticLoopback;
-    config.periodSizeInFrames = globalContext.sampleRate / 100;
+		config.periodSizeInFrames = globalContext.sampleRate / 100;
 		config.pUserData = this;
 
 		ma_result result = ma_device_init(globalContext.maContext, &config, device);
