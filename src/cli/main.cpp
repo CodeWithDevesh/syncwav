@@ -133,12 +133,10 @@ Examples:
 Options:)"
 );
 	app.footer(R"(----------------------------------------------------------------
-GitHub: https://github.com/DeveshAg/playit
-Report issues: Use --list-devices to debug device problems)");
+GitHub: https://github.com/syncwav/syncwav)");
 	argv = app.ensure_utf8(argv);
 
 
-	app.set_help_all_flag("--help-all", "Expand help to include advanced options");
 	app.set_help_flag("-h,--help", "Show this help message and exit");
 	app.usage("syncwav [OPTIONS]");
 
@@ -150,28 +148,37 @@ Report issues: Use --list-devices to debug device problems)");
 	INPUT_MODE inputMode = INPUT_MODE::NONE;
 	std::map<std::string, INPUT_MODE> inputMap{ {"loopback", INPUT_MODE::LOOPBACK},
 											   {"capture", INPUT_MODE::CAPTURE} };
-	app.add_option("--input", inputMode)
+
+	CLI::Transformer inputTransformer(inputMap, CLI::ignore_case);
+	inputTransformer.name("");
+	inputTransformer.description("");
+	app.add_option("--input,-i", inputMode)->type_name("<mode>")
 		->description("Input mode: 'loopback' (system audio) or 'capture' (microphone)")
-		->transform(CLI::CheckedTransformer(inputMap));
+		->transform(inputTransformer);
 
 	std::vector<OUTPUT_MODE> outputModes;
 	std::map<std::string, OUTPUT_MODE> outputMap{ {"local", OUTPUT_MODE::LOCAL},
 												 {"tcp", OUTPUT_MODE::TCP},
 												 {"udp", OUTPUT_MODE::UDP} };
-	app.add_option("--output", outputModes)
+	CLI::Transformer outputTransformer(outputMap, CLI::ignore_case);
+	outputTransformer.name("");
+	outputTransformer.description("");
+	app.add_option("--output,-o", outputModes)
 		->description("One or more output modes: 'local', 'tcp', 'udp'")
-		->transform(CLI::CheckedTransformer(outputMap))
+		->type_name("<mode>")
+		->transform(outputTransformer)
 		->expected(0, (int)OUTPUT_MODE::OUTPUT_MODE_COUNT);
 
-	app.add_option("--inputDevice", inputDevice,
-		"ID of input device (optional; defaults to system default)");
-	app.add_option("--device", outputDevice,
-		"ID of output device (only required if --output includes 'local')");
+	app.add_option("--inputDevice,-I", inputDevice,
+		"ID of input device (optional; defaults to system default)")->type_name("<id>");
+	app.add_option("--device,-d", outputDevice,
+		"ID of output device (only required if --output includes 'local')")->type_name("<id>");
 
 	app.add_flag("--list-devices,-l", list_devices,
 		"Print all available input/output devices and exit");
 	app.add_flag("--version,-v", show_version,
 		"Print version information and exit");
+
 
 	app.callback([&]() {
 		if (list_devices)
