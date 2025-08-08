@@ -4,6 +4,10 @@
 #include <memory>
 #include <string>
 #include <syncwav/core.h>
+#include <syncwav/io/CaptureInput.h>
+#include <syncwav/io/LoopbackInput.h>
+#include <syncwav/io/LocalOutput.h>
+
 
 enum class INPUT_MODE {
 	LOOPBACK,

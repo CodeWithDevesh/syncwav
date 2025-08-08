@@ -7,8 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-find_package(OpenSSL REQUIRED)
-
 add_subdirectory(external)
 
 file(GLOB_RECURSE CORE_SOURCES 
@@ -20,9 +18,39 @@ file(GLOB_RECURSE CLI_SOURCES
 
 add_library(syncwav_core SHARED ${CORE_SOURCES})
 target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
-target_link_libraries(syncwav_core PUBLIC spdlog::spdlog uWebSockets)
+target_link_libraries(syncwav_core PUBLIC spdlog::spdlog)
 target_include_directories(syncwav_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
+if(NOT WIN32)
+  find_package(PkgConfig REQUIRED)
+  pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
+    libavformat libavcodec libavutil swresample
+  )
+
+  target_link_libraries(syncwav_core
+    PkgConfig::FFMPEG
+  )
+  target_include_directories(syncwav_core PRIVATE
+    ${FFMPEG_INCLUDE_DIRS}
+  )
+
+else() # WIN32 branch
+
+  # Define path to FFmpeg
+  set(FFMPEG_ROOT "C:/Program Files/FFmpeg")
+
+  # Point to includes & libs manually
+  target_include_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/include")
+  target_link_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/lib")
+
+  # Link the static/dynamic libs
+  target_link_libraries(syncwav_core PUBLIC
+    avformat
+    avcodec
+    avutil
+    swresample
+  )
+endif()
 
 add_executable(syncwav_cli ${CLI_SOURCES})
 target_link_libraries(syncwav_cli syncwav_core CLI11::CLI11)

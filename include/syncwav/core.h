@@ -2,6 +2,6 @@
 
 #include "export.h"
 #include "log.h"
-#include "sinks.h"
+#include "io/sinks.h"
 #include "utils.h"
 #include "context.h"

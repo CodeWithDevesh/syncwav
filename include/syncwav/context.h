@@ -2,7 +2,7 @@
 #include "miniaudio.h"
 #include <memory>
 #include "export.h"
-#include "sinks.h"
+#include "io/sinks.h"
 #include <vector>
 
 namespace swav {
