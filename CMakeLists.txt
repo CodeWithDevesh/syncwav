@@ -15,6 +15,9 @@ file(GLOB_RECURSE CORE_SOURCES
 file(GLOB_RECURSE CLI_SOURCES 
 	"${PROJECT_SOURCE_DIR}/src/cli/*.cpp"
 	)
+file(GLOB_RECURSE TEST_SOURCES 
+	"${PROJECT_SOURCE_DIR}/src/test/*.cpp"
+	)
 
 add_library(syncwav_core SHARED ${CORE_SOURCES})
 target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
@@ -36,21 +39,22 @@ if(NOT WIN32)
 
 else() # WIN32 branch
 
-  # Define path to FFmpeg
   set(FFMPEG_ROOT "C:/Program Files/FFmpeg")
 
-  # Point to includes & libs manually
   target_include_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/include")
   target_link_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/lib")
 
-  # Link the static/dynamic libs
   target_link_libraries(syncwav_core PUBLIC
     avformat
     avcodec
     avutil
     swresample
   )
+  
 endif()
 
 add_executable(syncwav_cli ${CLI_SOURCES})
 target_link_libraries(syncwav_cli syncwav_core CLI11::CLI11)
+
+add_executable(syncwav_test ${TEST_SOURCES})
+target_link_libraries(syncwav_test syncwav_core)
