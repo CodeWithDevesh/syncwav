@@ -15,6 +15,6 @@ namespace swav {
 		ma_device* device;
 
 	private:
-		void loopback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint64 frameCount);
+		void loopback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
 	};
 }

@@ -14,7 +14,6 @@ namespace swav {
 		config.sampleRate = globalContext.sampleRate;
 		config.dataCallback = &CaptureInput::staticLoopback;
 		config.pUserData = this;
-		config.periodSizeInFrames = globalContext.sampleRate / 100;
 		// config.wasapi.noAutoConvertSRC = true;
 
 		ma_result result = ma_device_init(globalContext.maContext, &config, device);

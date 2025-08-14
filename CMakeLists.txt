@@ -27,10 +27,10 @@ target_include_directories(syncwav_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 if(NOT WIN32)
   find_package(PkgConfig REQUIRED)
   pkg_check_modules(FFMPEG REQUIRED IMPORTED_TARGET
-    libavformat libavcodec libavutil swresample
+    libavformat libavcodec libavutil libswresample
   )
 
-  target_link_libraries(syncwav_core
+  target_link_libraries(syncwav_core PUBLIC
     PkgConfig::FFMPEG
   )
   target_include_directories(syncwav_core PRIVATE

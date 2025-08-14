@@ -1,73 +1,58 @@
-#include <syncwav/io/LocalOutput.h>
 #include <syncwav/context.h>
+#include <syncwav/io/LocalOutput.h>
 #include <syncwav/log.h>
 
 namespace swav {
-	LocalOutput::LocalOutput(ma_device_id* id, ma_uint32 bufferSizeInFrames) :
-		Output("Local Output", bufferSizeInFrames) {
-		log::i("Configuring local output device");
-		const Context& globalContext = getGlobalContext();
-		device = new ma_device();
-		ma_device_config config = ma_device_config_init(ma_device_type_playback);
-		config.playback.pDeviceID = id;
-		config.playback.format = globalContext.format;
-		config.playback.channels = globalContext.channels;
-		config.sampleRate = globalContext.sampleRate;
-		config.dataCallback = &LocalOutput::staticLoopback;
-		config.periodSizeInFrames = globalContext.sampleRate / 100;
-		config.pUserData = this;
+LocalOutput::LocalOutput(ma_device_id *id, ma_uint32 bufferSizeInFrames)
+    : Output("Local Output", bufferSizeInFrames) {
+  log::i("Configuring local output device");
+  const Context &globalContext = getGlobalContext();
+  device = new ma_device();
+  ma_device_config config = ma_device_config_init(ma_device_type_playback);
+  config.playback.pDeviceID = id;
+  config.playback.format = globalContext.format;
+  config.playback.channels = globalContext.channels;
+  config.sampleRate = globalContext.sampleRate;
+  config.dataCallback = &LocalOutput::staticLoopback;
+  config.pUserData = this;
 
-		ma_result result = ma_device_init(globalContext.maContext, &config, device);
-		if (result != MA_SUCCESS) {
-			log::e("Error while initializing local output device");
-			std::exit(-1);
-		}
+  ma_result result = ma_device_init(globalContext.maContext, &config, device);
+  if (result != MA_SUCCESS) {
+    log::e("Error while initializing local output device");
+    std::exit(-1);
+  }
 
-		log::i("Local Output successfully initialized");
-	}
-
-	void LocalOutput::loopback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint64 frameCount) {
-		const Context& globalContext = getGlobalContext();
-		void* bufferIn;
-		ma_uint32 framesToRead = frameCount;
-		if (ma_pcm_rb_acquire_read(buffer, &framesToRead, &bufferIn) !=
-			MA_SUCCESS) {
-			log::t("Failed to acquire read on buffer");
-			return;
-		}
-		if (framesToRead < frameCount) {
-			log::t("Buffer empty, dropped {} frames.", (frameCount - framesToRead));
-		}
-
-		memcpy(pOutput, bufferIn,
-			static_cast<size_t>(framesToRead) * globalContext.framesSizeInBytes);
-		ma_pcm_rb_commit_read(buffer, framesToRead);
-
-		(void)pInput;
-	}
-
-	void LocalOutput::staticLoopback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount) {
-		LocalOutput* instance = static_cast<LocalOutput*>(pDevice->pUserData);
-		if (instance) {
-			instance->loopback(pDevice, pOutput, pInput, frameCount);
-		}
-	}
-
-	void LocalOutput::stop() {
-		log::i("Stopping output device");
-		ma_device_stop(device);
-	}
-
-	void LocalOutput::start() {
-		log::i("Starting output device");
-		ma_device_start(device);
-	}
-
-	LocalOutput::~LocalOutput() {
-		if (device) {
-			log::i("Uninitializing the output device");
-			ma_device_uninit(device);
-			delete device;
-		}
-	}
+  log::i("Local Output successfully initialized");
 }
+
+void LocalOutput::loopback(ma_device *pDevice, void *pOutput,
+                           const void *pInput, uint32_t frameCount) {
+  read(pOutput, frameCount);
+}
+
+void LocalOutput::staticLoopback(ma_device *pDevice, void *pOutput,
+                                 const void *pInput, uint32_t frameCount) {
+  LocalOutput *instance = static_cast<LocalOutput *>(pDevice->pUserData);
+  if (instance) {
+    instance->loopback(pDevice, pOutput, pInput, frameCount);
+  }
+}
+
+void LocalOutput::stop() {
+  log::i("Stopping output device");
+  ma_device_stop(device);
+}
+
+void LocalOutput::start() {
+  log::i("Starting output device");
+  ma_device_start(device);
+}
+
+LocalOutput::~LocalOutput() {
+  if (device) {
+    log::i("Uninitializing the output device");
+    ma_device_uninit(device);
+    delete device;
+  }
+}
+} // namespace swav

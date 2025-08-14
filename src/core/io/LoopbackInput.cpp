@@ -14,7 +14,6 @@ namespace swav {
 		config.sampleRate = globalContext.sampleRate;
 		config.dataCallback = &LoopbackInput::staticLoopback;
 		config.pUserData = this;
-		config.periodSizeInFrames = globalContext.sampleRate / 100;
 		// config.wasapi.noAutoConvertSRC = true;
 
 		ma_backend backends[] = { ma_backend_wasapi };
