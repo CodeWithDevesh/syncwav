@@ -5,7 +5,6 @@
 
 namespace swav {
 void Output::write(const void *data, uint32_t noOfFrames) {
-  const Context &globalContext = getGlobalContext();
   void *bufferOut;
   ma_uint32 framesToWrite = noOfFrames;
   ma_uint32 framesWritten = 0;
@@ -19,9 +18,8 @@ void Output::write(const void *data, uint32_t noOfFrames) {
     }
     memcpy(bufferOut,
            static_cast<const uint8_t *>(data) +
-               (framesWritten * globalContext.framesSizeInBytes),
-           static_cast<size_t>(framesToWrite) *
-               globalContext.framesSizeInBytes);
+               (framesWritten * context.framesSizeInBytes),
+           static_cast<size_t>(framesToWrite) * context.framesSizeInBytes);
     ma_pcm_rb_commit_write(buffer, framesToWrite);
     log::t("Written {} frames", framesToWrite);
     framesWritten += framesToWrite;
@@ -30,7 +28,6 @@ void Output::write(const void *data, uint32_t noOfFrames) {
 }
 
 void Output::read(void *outBuff, uint32_t frames) {
-  const Context &globalContext = getGlobalContext();
   ma_uint32 framesToRead = frames;
   uint32_t framesRead = 0;
   frames = std::min(frames, availableRead());
@@ -43,8 +40,8 @@ void Output::read(void *outBuff, uint32_t frames) {
       return;
     }
     memcpy(static_cast<uint8_t *>(outBuff) +
-               (framesRead * globalContext.framesSizeInBytes),
-           bufferin, framesToRead * globalContext.framesSizeInBytes);
+               (framesRead * context.framesSizeInBytes),
+           bufferin, framesToRead * context.framesSizeInBytes);
     ma_pcm_rb_commit_read(buffer, framesToRead);
     log::t("Read {} frames", framesToRead);
     framesRead += framesToRead;
@@ -55,12 +52,12 @@ void Output::read(void *outBuff, uint32_t frames) {
 uint32_t Output::availableWrite() { return ma_pcm_rb_available_write(buffer); }
 uint32_t Output::availableRead() { return ma_pcm_rb_available_read(buffer); }
 
-Output::Output(const char *name, uint32_t bufferSizeInFrames) : name(name) {
+Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames)
+    : name(name), context(context) {
   log::i("Initializing Output: {}", name);
-  const Context &globalContext = getGlobalContext();
   log::i("Allocating buffer for {}", name);
   buffer = new ma_pcm_rb();
-  if (ma_pcm_rb_init(globalContext.format, globalContext.channels,
+  if (ma_pcm_rb_init(toMiniaudioFormat(context.format), context.channels,
                      bufferSizeInFrames, NULL, NULL, buffer) != MA_SUCCESS) {
     log::c("Failed to allocate buffer for {}", name);
     std::exit(-1);

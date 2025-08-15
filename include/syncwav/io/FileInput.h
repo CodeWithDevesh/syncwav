@@ -10,9 +10,9 @@ extern "C" {
 }
 
 namespace swav {
-class SWAV_API FileAudioInput : public Input {
+class  FileAudioInput : public Input {
 public:
-  FileAudioInput(const char *filePath);
+  FileAudioInput(Context &context, const char *filePath);
   ~FileAudioInput();
   void start() override;
   void stop() override;
@@ -20,7 +20,8 @@ public:
 private:
   static void run(std::atomic<bool> *running, AVFormatContext *fmtCtx,
                   AVCodecContext *codecCtx, SwrContext *swrCtx,
-                  AVPacket *packet, AVFrame *frame, int streamIndex);
+                  AVPacket *packet, AVFrame *frame, int streamIndex,
+                  Context &context);
 
 private:
   std::thread *thread;

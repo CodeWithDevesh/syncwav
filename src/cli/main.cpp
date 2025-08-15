@@ -1,4 +1,5 @@
-﻿#include "syncwav/utils.h"
+﻿#include "syncwav/format.h"
+#include "syncwav/utils.h"
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <memory>
@@ -25,7 +26,8 @@ enum class OUTPUT_MODE {
 };
 
 std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
-                                      std::string file) {
+                                      std::string file,
+                                      swav::Context &context) {
   std::shared_ptr<swav::Input> input;
   if (mode == INPUT_MODE::LOOPBACK) {
     ma_device_id *id = NULL;
@@ -35,7 +37,7 @@ std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
       id = &(devices[device].id);
     }
 
-    input = std::make_shared<swav::LoopbackInput>(id);
+    input = std::make_shared<swav::LoopbackInput>(context, id);
   } else if (mode == INPUT_MODE::CAPTURE) {
     ma_device_id *id = NULL;
     std::vector<swav::Device> devices;
@@ -44,16 +46,17 @@ std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
       id = &(devices[device].id);
     }
 
-    input = std::make_shared<swav::CaptureInput>(id);
+    input = std::make_shared<swav::CaptureInput>(context, id);
   } else if (mode == INPUT_MODE::FILE) {
-    input = std::make_shared<swav::FileAudioInput>(file.c_str());
+    input = std::make_shared<swav::FileAudioInput>(context, file.c_str());
   } else {
     std::exit(0);
   }
   return input;
 }
 
-std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device) {
+std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device,
+                                        swav::Context &context) {
   std::shared_ptr<swav::Output> output;
   if (mode == OUTPUT_MODE::LOCAL) {
     ma_device_id *id = NULL;
@@ -62,7 +65,7 @@ std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device) {
       devices = swav::getPlaybackDevices();
       id = &(devices[device].id);
     }
-    output = std::make_shared<swav::LocalOutput>(id, 10000);
+    output = std::make_shared<swav::LocalOutput>(context, id, 10000);
   } else {
     std::exit(0);
   }
@@ -84,7 +87,6 @@ void listDevices() {
     auto device = devices[i];
     if (device.type == swav::DeviceType::PLAYBACK) {
       if (device.isDefault)
-
         std::cout << "\t" << i << ". " << device.name
                   << "\033[32m  -> (default)\033[m\n";
       else
@@ -111,20 +113,22 @@ void listDevices() {
 void start(INPUT_MODE iMode, std::vector<OUTPUT_MODE> oModes, int iDevice,
            std::vector<int> oDevice, std::string file) {
   swav::ContextConfig config;
-  swav::init(config);
-  swav::setInput(getInput(iMode, iDevice, file));
+  config.channels = 2;
+  config.format = swav::AudioFormat::S16;
+  swav::Context context = swav::init(config);
+  swav::setInput(context, getInput(iMode, iDevice, file, context));
   for (auto oMode : oModes) {
     for (auto device : oDevice)
-      swav::addOutput(getOutput(oMode, device));
+      swav::addOutput(context, getOutput(oMode, device, context));
   }
 
-  swav::start();
+  swav::start(context);
 
   std::cin.get();
 
   swav::log::i("got the stop signal... stopping...");
 
-  swav::uninit();
+  swav::uninit(context);
 }
 
 int setup(int argc, char **argv) {
@@ -236,5 +240,5 @@ GitHub: https://github.com/syncwav/syncwav)");
 
 int main(int argc, char **argv) {
   return setup(argc, argv);
-  // start(INPUT_MODE::CAPTURE, { OUTPUT_MODE::LOCAL }, 2, 1);
+  // start(INPUT_MODE::FILE, { OUTPUT_MODE::LOCAL }, -1, {1}, "test.mp3");
 }

@@ -3,20 +3,20 @@
 #include <syncwav/log.h>
 
 namespace swav {
-LocalOutput::LocalOutput(ma_device_id *id, ma_uint32 bufferSizeInFrames)
-    : Output("Local Output", bufferSizeInFrames) {
+LocalOutput::LocalOutput(Context &context, ma_device_id *id,
+                         ma_uint32 bufferSizeInFrames)
+    : Output("Local Output", context, bufferSizeInFrames) {
   log::i("Configuring local output device");
-  const Context &globalContext = getGlobalContext();
   device = new ma_device();
   ma_device_config config = ma_device_config_init(ma_device_type_playback);
   config.playback.pDeviceID = id;
-  config.playback.format = globalContext.format;
-  config.playback.channels = globalContext.channels;
-  config.sampleRate = globalContext.sampleRate;
+  config.playback.format = toMiniaudioFormat(context.format);
+  config.playback.channels = context.channels;
+  config.sampleRate = context.sampleRate;
   config.dataCallback = &LocalOutput::staticLoopback;
   config.pUserData = this;
 
-  ma_result result = ma_device_init(globalContext.maContext, &config, device);
+  ma_result result = ma_device_init(context.maContext, &config, device);
   if (result != MA_SUCCESS) {
     log::e("Error while initializing local output device");
     std::exit(-1);

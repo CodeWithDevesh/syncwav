@@ -1,37 +1,39 @@
 #pragma once
+#include "export.h"
 #include "miniaudio.h"
 #include <memory>
-#include "export.h"
-#include "io/sinks.h"
 #include <vector>
+#include <syncwav/format.h>
 
 namespace swav {
-	struct SWAV_API Context {
-		ma_uint32 framesSizeInBytes;
-		ma_uint32 channels;
-		ma_format format;
-		ma_uint32 sampleRate;
-		ma_context* maContext;
-		std::vector<std::shared_ptr<Output>> outputs;
-		std::shared_ptr<Input> input;
-	};
 
-	struct SWAV_API ContextConfig {
-		ma_uint32 channels = 2;
-		ma_format format = ma_format_f32;
-		ma_uint32 sampleRate = 48000;
-	};
+class Output;
+class Input;
 
-	SWAV_API void init(const ContextConfig& config);
-	SWAV_API void uninit();
-	SWAV_API const Context& getGlobalContext();
-	SWAV_API void setInput(std::shared_ptr<Input>);
-	SWAV_API void addOutput(std::shared_ptr<Output>);
-	SWAV_API void removeOutput(std::shared_ptr<Output>);
+struct SWAV_API Context {
+  ma_uint32 framesSizeInBytes;
+  ma_uint32 channels;
+  AudioFormat format;
+  ma_uint32 sampleRate;
+  ma_context *maContext;
+  bool stopped = true;
+  std::vector<std::shared_ptr<Output>> outputs;
+  std::shared_ptr<Input> input;
+};
 
-	SWAV_API void stop();
-	SWAV_API void start();
-	SWAV_API bool isStopped();
+struct SWAV_API ContextConfig {
+  ma_uint32 channels = 2;
+  AudioFormat format = AudioFormat::F32;
+  ma_uint32 sampleRate = 48000;
+};
 
-	SWAV_API bool isInitialized();
-}
+SWAV_API Context init(const ContextConfig &config);
+SWAV_API void uninit(Context &context);
+SWAV_API void setInput(Context &context, std::shared_ptr<Input>);
+SWAV_API void addOutput(Context &context, std::shared_ptr<Output>);
+SWAV_API void removeOutput(Context &context, std::shared_ptr<Output>);
+
+SWAV_API void stop(Context &context);
+SWAV_API void start(Context &context);
+SWAV_API bool isStopped(Context &context);
+} // namespace swav

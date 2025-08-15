@@ -5,7 +5,7 @@
 namespace swav {
 	class SWAV_API LocalOutput : public Output {
 	public:
-		LocalOutput(ma_device_id*, ma_uint32 bufferSizeInFrames);
+		LocalOutput(Context& context, ma_device_id*, ma_uint32 bufferSizeInFrames);
 		~LocalOutput();
 		static void staticLoopback(ma_device* pDevice, void* pOutput, const void* pInput, ma_uint32 frameCount);
 		void start() override;
