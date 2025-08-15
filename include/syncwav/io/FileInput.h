@@ -10,7 +10,7 @@ extern "C" {
 }
 
 namespace swav {
-class  FileAudioInput : public Input {
+class SWAV_API FileAudioInput : public Input {
 public:
   FileAudioInput(Context &context, const char *filePath);
   ~FileAudioInput();
