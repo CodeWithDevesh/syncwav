@@ -71,4 +71,8 @@ Output::~Output() {
     delete buffer;
   }
 }
+
+void Output::start() { log::i("Starting Output: {}", name); }
+
+void Output::stop() { log::i("Stopping Output: {}", name); }
 } // namespace swav

@@ -9,8 +9,8 @@ namespace swav {
 
 FileAudioInput::FileAudioInput(Context &context, const char *filePath)
     : Input("File Input", context) {
-    fmtCtx = nullptr;
-    swrCtx = nullptr;
+  fmtCtx = nullptr;
+  swrCtx = nullptr;
   if (avformat_open_input(&fmtCtx, filePath, nullptr, nullptr) < 0)
     throw std::runtime_error("Failed to open the file");
   if (avformat_find_stream_info(fmtCtx, nullptr) < 0)
@@ -55,6 +55,7 @@ FileAudioInput::~FileAudioInput() {
 void FileAudioInput::start() {
   if (*running)
     return;
+  Input::start();
   *running = true;
   thread = new std::thread(run, running, fmtCtx, codecCtx, swrCtx, packet,
                            frame, streamIndex, std::ref(context));
@@ -63,6 +64,7 @@ void FileAudioInput::start() {
 void FileAudioInput::stop() {
   if (!*running)
     return;
+  Input::stop();
   *running = false;
   thread->join();
   delete (thread);
@@ -82,8 +84,9 @@ void FileAudioInput::run(std::atomic<bool> *running, AVFormatContext *fmtCtx,
             swr_get_delay(swrCtx, codecCtx->sample_rate) + frame->nb_samples,
             48000, codecCtx->sample_rate, AV_ROUND_UP);
 
-        av_samples_alloc_array_and_samples(&outData, &outLinesize, context.channels, outNbSamples,
-                         toFFmpegFormat(context.format), 0);
+        av_samples_alloc_array_and_samples(&outData, &outLinesize,
+                                           context.channels, outNbSamples,
+                                           toFFmpegFormat(context.format), 0);
 
         int samplesConverted = swr_convert(
             swrCtx, outData, outNbSamples,

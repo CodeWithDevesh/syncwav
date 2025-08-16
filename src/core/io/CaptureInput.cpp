@@ -14,9 +14,8 @@ CaptureInput::CaptureInput(Context &context, ma_device_id *id)
   config.sampleRate = context.sampleRate;
   config.dataCallback = &CaptureInput::staticLoopback;
   config.pUserData = this;
-  // config.wasapi.noAutoConvertSRC = true;
 
-  ma_result result = ma_device_init(context.maContext, &config, device);
+  ma_result result = ma_device_init(NULL, &config, device);
   if (result != MA_SUCCESS) {
     log::e("Error while initializing input capture device");
     throw std::runtime_error("input capture not initialized");
@@ -41,12 +40,12 @@ void CaptureInput::staticLoopback(ma_device *pDevice, void *pOutput,
 }
 
 void CaptureInput::stop() {
-  log::i("Stopping input: {}", name);
+  Input::stop();
   ma_device_stop(device);
 }
 
 void CaptureInput::start() {
-  log::i("Starting input: {}", name);
+  Input::start();
   ma_device_start(device);
 }
 
