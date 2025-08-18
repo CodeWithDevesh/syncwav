@@ -15,7 +15,6 @@ struct SWAV_API Context {
   ma_uint32 channels;
   AudioFormat format;
   ma_uint32 sampleRate;
-  ma_context *maContext;
   bool stopped = true;
   std::vector<std::shared_ptr<Output>> outputs;
   std::shared_ptr<Input> input;

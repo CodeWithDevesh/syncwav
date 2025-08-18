@@ -59,7 +59,7 @@ Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames)
   buffer = new ma_pcm_rb();
   if (ma_pcm_rb_init(toMiniaudioFormat(context.format), context.channels,
                      bufferSizeInFrames, NULL, NULL, buffer) != MA_SUCCESS) {
-    log::c("Failed to allocate buffer for {}", name);
+    log::e("Failed to allocate buffer for {}", name);
     std::exit(-1);
   }
   log::i("Buffer for {} allocated successfully", name);

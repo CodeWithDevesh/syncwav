@@ -1,4 +1,5 @@
 #pragma once
+#include "export.h"
 #include <memory>
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -10,7 +11,7 @@
 
 namespace swav {
 namespace log {
-class Logger {
+class SWAV_API Logger {
 public:
   static std::shared_ptr<spdlog::logger> &get() {
     static std::shared_ptr<spdlog::logger> logger = create();
@@ -32,9 +33,39 @@ private:
         "syncwave", sink, spdlog::thread_pool(),
         spdlog::async_overflow_policy::block);
 
-    logger->set_level(SWAV_LOG_LEVEL);
+    logger->set_level(spdlog::level::warn);
     spdlog::register_logger(logger);
     return logger;
+  }
+};
+
+enum class LogLevel {
+  TRACE,
+  DEBUG,
+  INFO,
+  WARN,
+  ERROR,
+};
+
+inline void setLogLevel(LogLevel level) {
+  switch (level) {
+  case LogLevel::TRACE:
+    Logger::get()->set_level(spdlog::level::trace);
+    break;
+  case LogLevel::DEBUG:
+    Logger::get()->set_level(spdlog::level::debug);
+    break;
+  case LogLevel::INFO:
+    Logger::get()->set_level(spdlog::level::info);
+    break;
+  case LogLevel::WARN:
+    Logger::get()->set_level(spdlog::level::warn);
+    break;
+  case LogLevel::ERROR:
+    Logger::get()->set_level(spdlog::level::err);
+    break;
+  default:
+    Logger::get()->set_level(spdlog::level::info);
   }
 };
 
@@ -60,14 +91,8 @@ inline void e(fmt::format_string<Args...> fmt, Args &&...args) {
 }
 
 template <typename... Args>
-inline void c(fmt::format_string<Args...> fmt, Args &&...args) {
-  Logger::get()->critical(fmt, std::forward<Args>(args)...);
-}
-
-template <typename... Args>
 inline void t(fmt::format_string<Args...> fmt, Args &&...args) {
   Logger::get()->trace(fmt, std::forward<Args>(args)...);
 }
-
 }; // namespace log
 }; // namespace swav
