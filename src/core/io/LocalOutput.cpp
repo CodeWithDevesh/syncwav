@@ -16,7 +16,7 @@ LocalOutput::LocalOutput(Context &context, ma_device_id *id,
   config.dataCallback = &LocalOutput::staticLoopback;
   config.pUserData = this;
 
-  ma_result result = ma_device_init(context.maContext, &config, device);
+  ma_result result = ma_device_init(NULL, &config, device);
   if (result != MA_SUCCESS) {
     log::e("Error while initializing local output device");
     std::exit(-1);
@@ -39,12 +39,12 @@ void LocalOutput::staticLoopback(ma_device *pDevice, void *pOutput,
 }
 
 void LocalOutput::stop() {
-  log::i("Stopping output device");
+  Output::stop();
   ma_device_stop(device);
 }
 
 void LocalOutput::start() {
-  log::i("Starting output device");
+  Output::start();
   ma_device_start(device);
 }
 

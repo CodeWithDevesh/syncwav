@@ -1,4 +1,5 @@
 ﻿#include "syncwav/format.h"
+#include "syncwav/log.h"
 #include "syncwav/utils.h"
 #include <CLI/CLI.hpp>
 #include <iostream>
@@ -151,6 +152,7 @@ GitHub: https://github.com/syncwav/syncwav)");
   bool show_version = false;
   bool list_devices = false;
   int inputDevice = -1;
+  swav::log::LogLevel logLevel = swav::log::LogLevel::INFO;
   std::vector<int> outputDevices;
   std::string file;
 
@@ -193,10 +195,24 @@ GitHub: https://github.com/syncwav/syncwav)");
                  "includes 'local')")
       ->type_name("<id>");
 
-  app.add_flag("--list-devices,-l", list_devices,
+  app.add_flag("--list,-l", list_devices,
                "Print all available input/output devices and exit");
   app.add_flag("--version,-v", show_version,
                "Print version information and exit");
+
+  std::map<std::string, swav::log::LogLevel> logMap{
+      {"trace", swav::log::LogLevel::TRACE},
+      {"debug", swav::log::LogLevel::DEBUG},
+      {"info", swav::log::LogLevel::INFO},
+      {"warn", swav::log::LogLevel::WARN},
+      {"error", swav::log::LogLevel::ERROR}};
+  CLI::Transformer logTransformer(logMap, CLI::ignore_case);
+  logTransformer.name("");
+  logTransformer.description("");
+  app.add_option("--log", logLevel)
+      ->description("Set Log level")
+      ->type_name("<level>")
+      ->transform(logTransformer);
 
   app.callback([&]() {
     if (list_devices)
@@ -205,7 +221,7 @@ GitHub: https://github.com/syncwav/syncwav)");
       return;
 
     if (inputMode == INPUT_MODE::NONE) {
-      throw CLI::RequiredError("--input (choose 'loopback' or 'capture')");
+      throw CLI::RequiredError("--input");
     }
 
     if (outputModes.empty()) {
@@ -227,6 +243,8 @@ GitHub: https://github.com/syncwav/syncwav)");
   });
 
   CLI11_PARSE(app, argc, argv);
+
+  swav::log::setLogLevel(logLevel);
 
   if (list_devices)
     listDevices();

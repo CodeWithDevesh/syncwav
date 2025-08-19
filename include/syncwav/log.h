@@ -10,65 +10,89 @@
 #endif // !SW_LOG_LEVEL
 
 namespace swav {
-	namespace log {
+namespace log {
+class SWAV_API Logger {
+public:
+  static std::shared_ptr<spdlog::logger> &get() {
+    static std::shared_ptr<spdlog::logger> logger = create();
+    return logger;
+  }
 
-		class Logger {
-		public:
-			static std::shared_ptr<spdlog::logger>& get() {
-				static std::shared_ptr<spdlog::logger> logger = create();
-				return logger;
-			}
+  static void setLogLevel(spdlog::level::level_enum level) {
+    get()->set_level(level);
+  }
 
-			static void setLogLevel(spdlog::level::level_enum level) {
-				get()->set_level(level);
-			}
+private:
+  static std::shared_ptr<spdlog::logger> create() {
+    spdlog::init_thread_pool(8192, 1);
 
-		private:
-			static std::shared_ptr<spdlog::logger> create() {
-				spdlog::init_thread_pool(8192, 1);
+    auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+    sink->set_pattern("[%T.%e] [%^%l%$] %v");
 
-				auto sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-				sink->set_pattern("[%T.%e] [%^%l%$] %v");
+    auto logger = std::make_shared<spdlog::async_logger>(
+        "syncwave", sink, spdlog::thread_pool(),
+        spdlog::async_overflow_policy::block);
 
-				auto logger = std::make_shared<spdlog::async_logger>(
-					"syncwave", sink, spdlog::thread_pool(),
-					spdlog::async_overflow_policy::block);
+    logger->set_level(spdlog::level::warn);
+    spdlog::register_logger(logger);
+    return logger;
+  }
+};
 
-				logger->set_level(SWAV_LOG_LEVEL);
-				spdlog::register_logger(logger);
-				return logger;
-			}
-		};
+enum class LogLevel {
+  TRACE,
+  DEBUG,
+  INFO,
+  WARN,
+  ERROR,
+};
 
-		template <typename... Args>
-		inline void  d(fmt::format_string<Args...> fmt, Args &&...args) {
-			Logger::get()->debug(fmt, std::forward<Args>(args)...);
-		}
+inline void setLogLevel(LogLevel level) {
+  switch (level) {
+  case LogLevel::TRACE:
+    Logger::get()->set_level(spdlog::level::trace);
+    break;
+  case LogLevel::DEBUG:
+    Logger::get()->set_level(spdlog::level::debug);
+    break;
+  case LogLevel::INFO:
+    Logger::get()->set_level(spdlog::level::info);
+    break;
+  case LogLevel::WARN:
+    Logger::get()->set_level(spdlog::level::warn);
+    break;
+  case LogLevel::ERROR:
+    Logger::get()->set_level(spdlog::level::err);
+    break;
+  default:
+    Logger::get()->set_level(spdlog::level::info);
+  }
+};
 
-		template <typename... Args>
-		inline void  i(fmt::format_string<Args...> fmt, Args &&...args) {
-			Logger::get()->info(fmt, std::forward<Args>(args)...);
-		}
+template <typename... Args>
+inline void d(fmt::format_string<Args...> fmt, Args &&...args) {
+  Logger::get()->debug(fmt, std::forward<Args>(args)...);
+}
 
-		template <typename... Args>
-		inline void  w(fmt::format_string<Args...> fmt, Args &&...args) {
-			Logger::get()->warn(fmt, std::forward<Args>(args)...);
-		}
+template <typename... Args>
+inline void i(fmt::format_string<Args...> fmt, Args &&...args) {
+  Logger::get()->info(fmt, std::forward<Args>(args)...);
+}
 
-		template <typename... Args>
-		inline void  e(fmt::format_string<Args...> fmt, Args &&...args) {
-			Logger::get()->error(fmt, std::forward<Args>(args)...);
-		}
+template <typename... Args>
+inline void w(fmt::format_string<Args...> fmt, Args &&...args) {
+  Logger::get()->warn(fmt, std::forward<Args>(args)...);
+}
 
-		template <typename... Args>
-		inline void  c(fmt::format_string<Args...> fmt, Args &&...args) {
-			Logger::get()->critical(fmt, std::forward<Args>(args)...);
-		}
+template <typename... Args>
+inline void e(fmt::format_string<Args...> fmt, Args &&...args) {
+  Logger::get()->error(fmt, std::forward<Args>(args)...);
+  Logger::get()->flush();
+}
 
-		template <typename... Args>
-		inline void  t(fmt::format_string<Args...> fmt, Args &&...args) {
-			Logger::get()->trace(fmt, std::forward<Args>(args)...);
-		}
-
-	}; // namespace log
+template <typename... Args>
+inline void t(fmt::format_string<Args...> fmt, Args &&...args) {
+  Logger::get()->trace(fmt, std::forward<Args>(args)...);
+}
+}; // namespace log
 }; // namespace swav

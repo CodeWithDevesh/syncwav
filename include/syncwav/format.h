@@ -1,19 +1,34 @@
 #pragma once
-#include "export.h"
 #include "miniaudio.h"
 extern "C" {
 #include <libavutil/samplefmt.h>
 }
 
 namespace swav {
-enum class SWAV_API AudioFormat {
+enum class AudioFormat {
   F32, // 32-bit float
   S16, // 16-bit signed int
   S32, // 32-bit signed int
   U8   // 8-bit unsigned int
 };
 
-SWAV_API inline AVSampleFormat toFFmpegFormat(swav::AudioFormat fmt) {
+inline const char *toCString(AudioFormat fmt) {
+  using AF = swav::AudioFormat;
+  switch (fmt) {
+  case AF::F32:
+    return "float_32";
+  case AF::S16:
+    return "int_16";
+  case AF::S32:
+    return "int_32";
+  case AF::U8:
+    return "uint_8";
+  default:
+    return "unknown";
+  }
+}
+
+inline AVSampleFormat toFFmpegFormat(swav::AudioFormat fmt) {
   using AF = swav::AudioFormat;
   switch (fmt) {
   case AF::F32:
@@ -29,7 +44,7 @@ SWAV_API inline AVSampleFormat toFFmpegFormat(swav::AudioFormat fmt) {
   }
 }
 
-SWAV_API inline ma_format toMiniaudioFormat(swav::AudioFormat fmt) {
+inline ma_format toMiniaudioFormat(swav::AudioFormat fmt) {
   using AF = swav::AudioFormat;
   switch (fmt) {
   case AF::F32:

@@ -17,7 +17,7 @@ LoopbackInput::LoopbackInput(Context &context, ma_device_id *deviceId)
   config.pUserData = this;
 
   ma_backend backends[] = {ma_backend_wasapi};
-  ma_result result = ma_device_init(context.maContext, &config, device);
+  ma_result result = ma_device_init(NULL, &config, device);
   if (result != MA_SUCCESS) {
     log::e("Error while initializing input loopback device");
     throw std::runtime_error("input loopback not initialized");
@@ -47,12 +47,12 @@ void LoopbackInput::stop() {
 }
 
 void LoopbackInput::start() {
-  log::i("Starting input: {}", name);
+  Input::start();
   ma_device_start(device);
 }
 
 LoopbackInput::~LoopbackInput() {
-  log::i("Uninitializing the looback input");
+  Input::stop();
   if (device) {
     ma_device_uninit(device);
     delete device;

@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
-
+add_subdirectory(miniaudio)
 add_subdirectory(spdlog)
 add_subdirectory(cli11)
 # add_subdirectory(libuv)
