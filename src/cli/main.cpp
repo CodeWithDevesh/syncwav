@@ -1,4 +1,6 @@
 ﻿#include "syncwav/format.h"
+#include "syncwav/io/TCPInput.h"
+#include "syncwav/io/TCPOutput.h"
 #include "syncwav/log.h"
 #include "syncwav/utils.h"
 #include <CLI/CLI.hpp>
@@ -15,6 +17,7 @@ enum class INPUT_MODE {
   LOOPBACK,
   CAPTURE,
   FILE,
+  TCP,
   INPUT_MODE_COUNT, // Always keep these two at the end
   NONE
 };
@@ -27,8 +30,8 @@ enum class OUTPUT_MODE {
 };
 
 std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
-                                      std::string file,
-                                      swav::Context &context) {
+                                      std::string file, std::string ip,
+                                      int port, swav::Context &context) {
   std::shared_ptr<swav::Input> input;
   if (mode == INPUT_MODE::LOOPBACK) {
     ma_device_id *id = NULL;
@@ -50,6 +53,8 @@ std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
     input = std::make_shared<swav::CaptureInput>(context, id);
   } else if (mode == INPUT_MODE::FILE) {
     input = std::make_shared<swav::FileAudioInput>(context, file.c_str());
+  } else if (mode == INPUT_MODE::TCP) {
+    input = std::make_shared<swav::TCPInput>(context, ip.c_str(), port);
   } else {
     std::exit(0);
   }
@@ -57,6 +62,7 @@ std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
 }
 
 std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device,
+                                        std::string ip, int port,
                                         swav::Context &context) {
   std::shared_ptr<swav::Output> output;
   if (mode == OUTPUT_MODE::LOCAL) {
@@ -67,6 +73,8 @@ std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device,
       id = &(devices[device].id);
     }
     output = std::make_shared<swav::LocalOutput>(context, id, 10000);
+  } else if (mode == OUTPUT_MODE::TCP) {
+    output = std::make_shared<swav::TCPOutput>(context, ip.c_str(), port, 10000);
   } else {
     std::exit(0);
   }
@@ -112,15 +120,19 @@ void listDevices() {
 }
 
 void start(INPUT_MODE iMode, std::vector<OUTPUT_MODE> oModes, int iDevice,
-           std::vector<int> oDevice, std::string file) {
+           std::vector<int> oDevice, std::string file, std::string ip,
+           int port) {
   swav::ContextConfig config;
   config.channels = 2;
   config.format = swav::AudioFormat::S16;
   swav::Context context = swav::init(config);
-  swav::setInput(context, getInput(iMode, iDevice, file, context));
+  swav::setInput(context, getInput(iMode, iDevice, file, ip, port, context));
   for (auto oMode : oModes) {
-    for (auto device : oDevice)
-      swav::addOutput(context, getOutput(oMode, device, context));
+    if (oMode == OUTPUT_MODE::LOCAL)
+      for (auto device : oDevice)
+        swav::addOutput(context, getOutput(oMode, device, ip, port, context));
+    else
+      swav::addOutput(context, getOutput(oMode, -1, ip, port, context));
   }
 
   swav::start(context);
@@ -155,11 +167,14 @@ GitHub: https://github.com/syncwav/syncwav)");
   swav::log::LogLevel logLevel = swav::log::LogLevel::INFO;
   std::vector<int> outputDevices;
   std::string file;
+  std::string ip = "0.0.0.0";
+  int port = 9001;
 
   INPUT_MODE inputMode = INPUT_MODE::NONE;
   std::map<std::string, INPUT_MODE> inputMap{{"loopback", INPUT_MODE::LOOPBACK},
                                              {"capture", INPUT_MODE::CAPTURE},
-                                             {"file", INPUT_MODE::FILE}};
+                                             {"file", INPUT_MODE::FILE},
+                                             {"tcp", INPUT_MODE::TCP}};
 
   CLI::Transformer inputTransformer(inputMap, CLI::ignore_case);
   inputTransformer.name("");
@@ -200,6 +215,9 @@ GitHub: https://github.com/syncwav/syncwav)");
   app.add_flag("--version,-v", show_version,
                "Print version information and exit");
 
+  app.add_option("--ip", ip, "IP for TCP input/output");
+  app.add_option("--port,-p", port, "Port for TCP input/output");
+
   std::map<std::string, swav::log::LogLevel> logMap{
       {"trace", swav::log::LogLevel::TRACE},
       {"debug", swav::log::LogLevel::DEBUG},
@@ -222,6 +240,17 @@ GitHub: https://github.com/syncwav/syncwav)");
 
     if (inputMode == INPUT_MODE::NONE) {
       throw CLI::RequiredError("--input");
+    }
+
+    if (inputMode == INPUT_MODE::TCP ||
+        std::find(outputModes.begin(), outputModes.end(), OUTPUT_MODE::TCP) !=
+            outputModes.end()) {
+      if (ip.size() == 0) {
+        throw CLI::RequiredError(
+            "ip to connect to required!! Specify with --ip");
+      }
+      if (port == -1)
+        throw CLI::RequiredError("port required!! Specify with -p");
     }
 
     if (outputModes.empty()) {
@@ -251,7 +280,7 @@ GitHub: https://github.com/syncwav/syncwav)");
   if (show_version)
     printVersion();
 
-  start(inputMode, outputModes, inputDevice, outputDevices, file);
+  start(inputMode, outputModes, inputDevice, outputDevices, file, ip, port);
 
   return 0;
 }
