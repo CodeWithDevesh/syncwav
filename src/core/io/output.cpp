@@ -4,6 +4,30 @@
 #include <syncwav/log.h>
 
 namespace swav {
+
+Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames)
+    : name(name), context(context) {
+  log::i("[output] Initializing Output: {}", name);
+  log::d("[output] target: {}, channels: {}, format: {}, buffer_size: {}", name,
+         context.channels, toCString(context.format),
+         bufferSizeInFrames * context.framesSizeInBytes);
+  buffer = new ma_pcm_rb();
+  if (ma_pcm_rb_init(toMiniaudioFormat(context.format), context.channels,
+                     bufferSizeInFrames, NULL, NULL, buffer) != MA_SUCCESS) {
+    log::e("Failed to allocate buffer for {}", name);
+    std::exit(-1);
+  }
+  log::i("Buffer for {} allocated successfully", name);
+}
+
+Output::~Output() {
+  log::i("[output] Uninitializing Output: {}", name);
+  if (buffer) {
+    ma_pcm_rb_uninit(buffer);
+    delete buffer;
+  }
+}
+
 void Output::write(const void *data, uint32_t noOfFrames) {
   void *bufferOut;
   ma_uint32 framesToWrite = noOfFrames;
@@ -52,27 +76,8 @@ void Output::read(void *outBuff, uint32_t frames) {
 uint32_t Output::availableWrite() { return ma_pcm_rb_available_write(buffer); }
 uint32_t Output::availableRead() { return ma_pcm_rb_available_read(buffer); }
 
-Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames)
-    : name(name), context(context) {
-  log::i("Initializing Output: {}", name);
-  log::i("Allocating buffer for {}", name);
-  buffer = new ma_pcm_rb();
-  if (ma_pcm_rb_init(toMiniaudioFormat(context.format), context.channels,
-                     bufferSizeInFrames, NULL, NULL, buffer) != MA_SUCCESS) {
-    log::e("Failed to allocate buffer for {}", name);
-    std::exit(-1);
-  }
-  log::i("Buffer for {} allocated successfully", name);
-}
-
-Output::~Output() {
-  if (buffer) {
-    ma_pcm_rb_uninit(buffer);
-    delete buffer;
-  }
-}
-
 void Output::start() { log::i("Starting Output: {}", name); }
 
 void Output::stop() { log::i("Stopping Output: {}", name); }
+
 } // namespace swav

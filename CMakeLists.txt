@@ -7,6 +7,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+find_package(OpenSSL)
+
 add_subdirectory(external)
 
 file(GLOB_RECURSE CORE_SOURCES 
@@ -21,7 +23,7 @@ file(GLOB_RECURSE TEST_SOURCES
 
 add_library(syncwav_core SHARED ${CORE_SOURCES})
 target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
-target_link_libraries(syncwav_core PUBLIC miniaudio spdlog::spdlog)
+target_link_libraries(syncwav_core PUBLIC miniaudio spdlog::spdlog uWebSockets ixwebsocket)
 target_include_directories(syncwav_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 if(NOT WIN32)
