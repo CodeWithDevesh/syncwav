@@ -164,7 +164,7 @@ GitHub: https://github.com/syncwav/syncwav)");
   bool show_version = false;
   bool list_devices = false;
   int inputDevice = -1;
-  swav::log::LogLevel logLevel = swav::log::LogLevel::INFO;
+  swav::log::LogLevel logLevel = swav::log::LogLevel::WARN;
   std::vector<int> outputDevices;
   std::string file;
   std::string ip = "0.0.0.0";
