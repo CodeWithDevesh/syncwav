@@ -5,9 +5,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-#ifndef SWAV_LOG_LEVEL
-#define SWAV_LOG_LEVEL spdlog::level::trace
-#endif // !SW_LOG_LEVEL
 
 namespace swav {
 namespace log {
@@ -44,7 +41,7 @@ enum class LogLevel {
   DEBUG,
   INFO,
   WARN,
-  ERROR,
+  ERR
 };
 
 inline void setLogLevel(LogLevel level) {
@@ -61,7 +58,7 @@ inline void setLogLevel(LogLevel level) {
   case LogLevel::WARN:
     Logger::get()->set_level(spdlog::level::warn);
     break;
-  case LogLevel::ERROR:
+  case LogLevel::ERR:
     Logger::get()->set_level(spdlog::level::err);
     break;
   default:

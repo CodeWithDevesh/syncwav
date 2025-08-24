@@ -223,7 +223,7 @@ GitHub: https://github.com/syncwav/syncwav)");
       {"debug", swav::log::LogLevel::DEBUG},
       {"info", swav::log::LogLevel::INFO},
       {"warn", swav::log::LogLevel::WARN},
-      {"error", swav::log::LogLevel::ERROR}};
+      {"error", swav::log::LogLevel::ERR}};
   CLI::Transformer logTransformer(logMap, CLI::ignore_case);
   logTransformer.name("");
   logTransformer.description("");
