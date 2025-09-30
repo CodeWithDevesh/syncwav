@@ -23,7 +23,6 @@ TCPInput::TCPInput(Context &context, const char *ip, int port)
     } else if (msg->type == ix::WebSocketMessageType::Open) {
       log::i("[TCP Input] Connection established");
     } else if (msg->type == ix::WebSocketMessageType::Error) {
-      // Maybe SSL is not configured properly
       log::e("[TCP Input] Connection error: {}", msg->errorInfo.reason);
     }
   });
@@ -32,6 +31,7 @@ TCPInput::TCPInput(Context &context, const char *ip, int port)
 TCPInput::~TCPInput() {
   stop();
   delete websocket;
+  ix::uninitNetSystem();
 }
 
 void TCPInput::start() {

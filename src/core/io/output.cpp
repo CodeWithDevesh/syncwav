@@ -5,8 +5,9 @@
 
 namespace swav {
 
-Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames)
-    : name(name), context(context) {
+Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames,
+               uint32_t delay)
+    : name(name), context(context), delay(delay) {
   log::i("[output] Initializing Output: {}", name);
   log::d("[output] target: {}, channels: {}, format: {}, buffer_size: {}", name,
          context.channels, toCString(context.format),
@@ -74,7 +75,22 @@ void Output::read(void *outBuff, uint32_t frames) {
 }
 
 uint32_t Output::availableWrite() { return ma_pcm_rb_available_write(buffer); }
-uint32_t Output::availableRead() { return ma_pcm_rb_available_read(buffer); }
+uint32_t Output::availableRead() {
+  uint32_t av = ma_pcm_rb_available_read(buffer);
+  if (av < delay) {
+    playing = false;
+    return 0;
+  }
+  if (av >= 2 * delay) {
+    playing = true;
+    return av;
+  }
+  if (av > delay && playing) {
+    return av;
+  } else {
+    return 0;
+  }
+}
 
 void Output::start() { log::i("Starting Output: {}", name); }
 

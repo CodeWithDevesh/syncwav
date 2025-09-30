@@ -1,9 +1,9 @@
 #pragma once
 #include "../export.h"
-#include <atomic>
 #include "sinks.h"
 #include "thread"
-#include <App.h>
+#include <atomic>
+#include <ixwebsocket/IXWebSocketServer.h>
 
 namespace swav {
 class SWAV_API TCPOutput : public Output {
@@ -17,11 +17,12 @@ private:
   void run();
 
 private:
-  std::thread appThread, broadcastThread;
+  std::thread broadcastThread;
   std::atomic<bool> running{false};
-  uWS::App *globalApp;
-  uWS::Loop *globalLoop;
-  const char* ip;
+  ix::WebSocketServer *server = nullptr;
+  std::mutex socketsMutex;
+  std::unordered_map<std::string, ix::WebSocket *> sockets;
+  const char *ip;
   int port;
 };
 } // namespace swav

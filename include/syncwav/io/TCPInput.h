@@ -3,6 +3,7 @@
 #include "sinks.h"
 #include <atomic>
 #include <ixwebsocket/IXWebSocket.h>
+#include <miniaudio.h>
 
 namespace swav {
 class SWAV_API TCPInput : public Input {
