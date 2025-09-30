@@ -16,8 +16,7 @@ file(GLOB_RECURSE CLI_SOURCES "${PROJECT_SOURCE_DIR}/src/cli/*.cpp")
 
 add_library(syncwav_core SHARED ${CORE_SOURCES})
 target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
-target_link_libraries(syncwav_core PUBLIC miniaudio spdlog::spdlog uWebSockets
-                                          ixwebsocket)
+target_link_libraries(syncwav_core PUBLIC miniaudio spdlog::spdlog ixwebsocket)
 target_include_directories(syncwav_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 if(NOT WIN32)
