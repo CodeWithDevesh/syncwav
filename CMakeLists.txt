@@ -13,6 +13,7 @@ add_subdirectory(external)
 
 file(GLOB_RECURSE CORE_SOURCES "${PROJECT_SOURCE_DIR}/src/core/*.cpp")
 file(GLOB_RECURSE CLI_SOURCES "${PROJECT_SOURCE_DIR}/src/cli/*.cpp")
+file(GLOB_RECURSE TUI_SOURCES "${PROJECT_SOURCE_DIR}/src/tui/*.cpp")
 
 add_library(syncwav_core SHARED ${CORE_SOURCES})
 target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
@@ -46,3 +47,6 @@ endif()
 
 add_executable(syncwav_cli ${CLI_SOURCES})
 target_link_libraries(syncwav_cli syncwav_core CLI11::CLI11)
+
+add_executable(syncwav_tui ${TUI_SOURCES})
+target_link_libraries(syncwav_tui PRIVATE syncwav_core ftxui::component ftxui::dom ftxui::screen)

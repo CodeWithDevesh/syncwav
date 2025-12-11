@@ -72,9 +72,9 @@ std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device,
       devices = swav::getPlaybackDevices();
       id = &(devices[device].id);
     }
-    output = std::make_shared<swav::LocalOutput>(context, id, 10000);
+    output = std::make_shared<swav::LocalOutput>(context, id, 5000);
   } else if (mode == OUTPUT_MODE::TCP) {
-    output = std::make_shared<swav::TCPOutput>(context, ip.c_str(), port, 10000);
+    output = std::make_shared<swav::TCPOutput>(context, ip.c_str(), port, 5000);
   } else {
     std::exit(0);
   }

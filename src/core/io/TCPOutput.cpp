@@ -1,5 +1,6 @@
 #include "ixwebsocket/IXNetSystem.h"
 #include "ixwebsocket/IXWebSocketMessageType.h"
+#include "syncwav/context.h"
 #include <syncwav/io/TCPOutput.h>
 #include <syncwav/log.h>
 
@@ -68,6 +69,7 @@ void TCPOutput::run() {
 
       ma_uint32 framesToSend = ((framesAvailable * 4) / 4);
       framesToSend *= 480;
+      // ma_uint32 framesToSend = std::min(framesAvailable, 480u);
       log::t("[TCP Output] Gonna send {} frames of audio data.", framesToSend);
       read(buffer, framesToSend);
 
@@ -80,7 +82,8 @@ void TCPOutput::run() {
         }
       }
 
-      nextTick = steady_clock::now() + 5ms;
+      // nextTick += ((framesToSend * 1000) / context.sampleRate) * 1ms;
+      nextTick += 5ms;
     }
     free(buffer);
     log::i("[TCP OUTPUT] stopping the server");
