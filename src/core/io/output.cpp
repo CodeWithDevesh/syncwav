@@ -2,6 +2,7 @@
 #include <syncwav/context.h>
 #include <syncwav/io/sinks.h>
 #include <syncwav/log.h>
+#include <syncwav/middlewares/middleware.h>
 
 namespace swav {
 
@@ -29,11 +30,28 @@ Output::~Output() {
   }
 }
 
-void Output::write(const void *data, uint32_t noOfFrames) {
+void Output::write(const void *data, uint32_t noOfFrames, int32_t src) {
+  uint32_t dest = src + 1;
+  if (dest >= middlewares.size()) {
+    implicitWrite(data, noOfFrames);
+    return;
+  }
+  middlewares[dest]->write(data, noOfFrames);
+}
+
+uint32_t Output::availableWrite(int32_t src) {
+  uint32_t dest = src + 1;
+  if (dest >= middlewares.size()) {
+    return implicitAvailableWrite();
+  }
+  return middlewares[dest]->availableWrite();
+}
+
+void Output::implicitWrite(const void *data, uint32_t noOfFrames) {
   void *bufferOut;
   ma_uint32 framesToWrite = noOfFrames;
   ma_uint32 framesWritten = 0;
-  noOfFrames = std::min(noOfFrames, availableWrite());
+  noOfFrames = std::min(noOfFrames, implicitAvailableWrite());
   log::t("Writing {} frames", noOfFrames);
   while (framesWritten < noOfFrames) {
     if (ma_pcm_rb_acquire_write(buffer, &framesToWrite, &bufferOut) !=
@@ -74,7 +92,9 @@ void Output::read(void *outBuff, uint32_t frames) {
   }
 }
 
-uint32_t Output::availableWrite() { return ma_pcm_rb_available_write(buffer); }
+uint32_t Output::implicitAvailableWrite() {
+  return ma_pcm_rb_available_write(buffer);
+}
 uint32_t Output::availableRead() {
   uint32_t av = ma_pcm_rb_available_read(buffer);
   if (av < delay) {
@@ -90,6 +110,16 @@ uint32_t Output::availableRead() {
   } else {
     return 0;
   }
+}
+
+int32_t Output::addMiddleware(Middleware &middleware) {
+  if (playing) {
+    log::e("[output] Cannot add middleware: {} while {} is running",
+           middleware.name, name);
+    return -1;
+  }
+  middlewares.push_back(middleware.clone());
+  return middlewares.size() - 1;
 }
 
 void Output::start() { log::i("Starting Output: {}", name); }
