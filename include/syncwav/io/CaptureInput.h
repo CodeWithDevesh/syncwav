@@ -1,5 +1,5 @@
 #pragma once
-#include "sinks.h"
+#include "Sinks.h"
 
 namespace swav {
 class SWAV_API CaptureInput : public Input {

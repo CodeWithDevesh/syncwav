@@ -1,10 +1,10 @@
-#include "syncwav/format.h"
+#include "syncwav/Format.h"
 #include <algorithm>
 #include <stdexcept>
 #include <string>
-#include <syncwav/context.h>
-#include <syncwav/io/sinks.h>
-#include <syncwav/log.h>
+#include <syncwav/Context.h>
+#include <syncwav/io/Sinks.h>
+#include <syncwav/Log.h>
 
 namespace swav {
 

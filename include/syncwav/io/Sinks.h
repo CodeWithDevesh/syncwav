@@ -1,6 +1,6 @@
 #pragma once
-#include "../context.h"
-#include "../export.h"
+#include "../Context.h"
+#include "../Export.h"
 #include <cstdint>
 #include <miniaudio.h>
 

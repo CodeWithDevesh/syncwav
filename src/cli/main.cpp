@@ -1,13 +1,13 @@
-﻿#include "syncwav/format.h"
+﻿#include "syncwav/Format.h"
 #include "syncwav/io/TCPInput.h"
 #include "syncwav/io/TCPOutput.h"
-#include "syncwav/log.h"
-#include "syncwav/utils.h"
+#include "syncwav/Log.h"
+#include "syncwav/Utils.h"
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <memory>
 #include <string>
-#include <syncwav/core.h>
+#include <syncwav/Core.h>
 #include <syncwav/io/CaptureInput.h>
 #include <syncwav/io/FileInput.h>
 #include <syncwav/io/LocalOutput.h>

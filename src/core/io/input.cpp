@@ -1,5 +1,5 @@
-#include <syncwav/io/sinks.h>
-#include <syncwav/log.h>
+#include <syncwav/io/Sinks.h>
+#include <syncwav/Log.h>
 
 namespace swav {
 Input::Input(const char *name, Context &context)

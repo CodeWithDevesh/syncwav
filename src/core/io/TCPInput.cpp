@@ -2,7 +2,7 @@
 #include <ixwebsocket/IXUserAgent.h>
 #include <string>
 #include <syncwav/io/TCPInput.h>
-#include <syncwav/log.h>
+#include <syncwav/Log.h>
 
 namespace swav {
 

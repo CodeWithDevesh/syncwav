@@ -1,5 +1,5 @@
-#include <syncwav/utils.h>
-#include <syncwav/log.h>
+#include <syncwav/Utils.h>
+#include <syncwav/Log.h>
 
 
 namespace swav {

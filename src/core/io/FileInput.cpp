@@ -1,8 +1,8 @@
-#include "syncwav/format.h"
+#include "syncwav/Format.h"
 #include <chrono>
 #include <stdexcept>
 #include <syncwav/io/FileInput.h>
-#include <syncwav/log.h>
+#include <syncwav/Log.h>
 #include <thread>
 
 namespace swav {
