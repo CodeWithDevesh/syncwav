@@ -1,4 +1,4 @@
-#include <syncwav/io/sinks.h>
+#include <syncwav/io/input.h>
 #include <syncwav/log.h>
 
 namespace swav {

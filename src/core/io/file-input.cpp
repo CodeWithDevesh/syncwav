@@ -4,6 +4,8 @@
 #include <syncwav/io/file-input.h>
 #include <syncwav/log.h>
 #include <thread>
+#include <syncwav/context.h>
+#include <syncwav/io/output.h>
 
 namespace swav {
 

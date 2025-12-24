@@ -1,6 +1,7 @@
 #include <syncwav/context.h>
 #include <syncwav/io/capture-input.h>
 #include <syncwav/log.h>
+#include <syncwav/io/output.h>
 
 namespace swav {
 CaptureInput::CaptureInput(Context &context, ma_device_id *id)

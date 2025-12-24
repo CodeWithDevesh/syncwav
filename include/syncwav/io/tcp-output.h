@@ -1,6 +1,6 @@
 #pragma once
 #include "../export.h"
-#include "sinks.h"
+#include "output.h"
 #include "thread"
 #include <atomic>
 #include <ixwebsocket/IXWebSocketServer.h>

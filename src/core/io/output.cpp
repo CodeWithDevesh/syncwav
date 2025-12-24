@@ -1,6 +1,6 @@
 #include "syncwav/utils.h"
 #include <syncwav/context.h>
-#include <syncwav/io/sinks.h>
+#include <syncwav/io/output.h>
 #include <syncwav/log.h>
 #include <syncwav/middlewares/middleware.h>
 

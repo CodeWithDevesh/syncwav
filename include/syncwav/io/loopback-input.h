@@ -1,6 +1,5 @@
 #pragma once
-
-#include "sinks.h"
+#include "input.h"
 
 namespace swav {
 class SWAV_API LoopbackInput : public Input {

@@ -3,7 +3,8 @@
 #include <stdexcept>
 #include <string>
 #include <syncwav/context.h>
-#include <syncwav/io/sinks.h>
+#include <syncwav/io/input.h>
+#include <syncwav/io/output.h>
 #include <syncwav/log.h>
 
 namespace swav {

@@ -1,6 +1,5 @@
 #pragma once
-
-#include "sinks.h"
+#include "output.h"
 
 namespace swav {
 	class SWAV_API LocalOutput : public Output {

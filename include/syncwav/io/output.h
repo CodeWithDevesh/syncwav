@@ -1,12 +1,14 @@
 #pragma once
-#include "../context.h"
 #include "../export.h"
 #include <cstdint>
 #include <miniaudio.h>
+#include <vector>
+#include <memory>
 
-namespace swav {
+namespace swav{
 
 class Middleware;
+struct Context;
 
 class SWAV_API Output {
 public:
@@ -40,18 +42,4 @@ protected:
   std::vector<std::unique_ptr<Middleware>> middlewares;
 };
 
-class SWAV_API Input {
-public:
-  virtual void start() = 0;
-  virtual void stop() = 0;
-  virtual ~Input() = default;
-  Input(const char *name, Context &context);
-
-public:
-  const char *name;
-
-protected:
-  Context &context;
-};
-
-} // namespace swav
+}

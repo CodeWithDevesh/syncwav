@@ -2,6 +2,7 @@
 #include <syncwav/context.h>
 #include <syncwav/io/loopback-input.h>
 #include <syncwav/log.h>
+#include <syncwav/io/output.h>
 
 namespace swav {
 LoopbackInput::LoopbackInput(Context &context, ma_device_id *deviceId)

@@ -1,6 +1,6 @@
 #pragma once
 #include "../export.h"
-#include "sinks.h"
+#include "input.h"
 #include <thread>
 extern "C" {
 #include <libavcodec/avcodec.h>
