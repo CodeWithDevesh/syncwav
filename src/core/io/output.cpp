@@ -1,8 +1,8 @@
-#include "syncwav/Utils.h"
-#include <syncwav/Context.h>
-#include <syncwav/io/Sinks.h>
-#include <syncwav/Log.h>
-#include <syncwav/middlewares/Middleware.h>
+#include "syncwav/utils.h"
+#include <syncwav/context.h>
+#include <syncwav/io/sinks.h>
+#include <syncwav/log.h>
+#include <syncwav/middlewares/middleware.h>
 
 namespace swav {
 

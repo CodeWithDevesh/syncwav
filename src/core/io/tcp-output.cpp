@@ -1,8 +1,8 @@
 #include "ixwebsocket/IXNetSystem.h"
 #include "ixwebsocket/IXWebSocketMessageType.h"
-#include "syncwav/Context.h"
-#include <syncwav/io/TCPOutput.h>
-#include <syncwav/Log.h>
+#include "syncwav/context.h"
+#include <syncwav/io/tcp-output.h>
+#include <syncwav/log.h>
 
 namespace swav {
 

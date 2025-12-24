@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <syncwav/Export.h>
+#include <syncwav/export.h>
 #include <miniaudio.h>
 #include <vector>
 #define SYNCWAV_VERSION "1.0.0"

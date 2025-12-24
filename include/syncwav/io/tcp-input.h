@@ -1,6 +1,6 @@
 #pragma once
-#include "../Export.h"
-#include "Sinks.h"
+#include "../export.h"
+#include "sinks.h"
 #include <atomic>
 #include <ixwebsocket/IXWebSocket.h>
 #include <miniaudio.h>

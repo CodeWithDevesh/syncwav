@@ -1,4 +1,4 @@
-set(ZLIB_USE_STATIC_LIBS ON)
+set(ZLIB_USE_STATIC_LIBS OFF)
 find_package(ZLIB REQUIRED)
 
 add_subdirectory(miniaudio)

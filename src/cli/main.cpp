@@ -1,17 +1,16 @@
-﻿#include "syncwav/Format.h"
-#include "syncwav/io/TCPInput.h"
-#include "syncwav/io/TCPOutput.h"
-#include "syncwav/Log.h"
-#include "syncwav/Utils.h"
+﻿#include "syncwav/format.h"
+#include "syncwav/io/tcp-input.h"
+#include "syncwav/io/tcp-output.h"
+#include "syncwav/log.h"
+#include "syncwav/utils.h"
 #include <CLI/CLI.hpp>
 #include <iostream>
-#include <memory>
 #include <string>
-#include <syncwav/Core.h>
-#include <syncwav/io/CaptureInput.h>
-#include <syncwav/io/FileInput.h>
-#include <syncwav/io/LocalOutput.h>
-#include <syncwav/io/LoopbackInput.h>
+#include <syncwav/core.h>
+#include <syncwav/io/capture-input.h>
+#include <syncwav/io/file-input.h>
+#include <syncwav/io/local-output.h>
+#include <syncwav/io/loopback-input.h>
 
 enum class INPUT_MODE {
   LOOPBACK,

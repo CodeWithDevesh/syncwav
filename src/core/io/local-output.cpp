@@ -1,6 +1,6 @@
-#include <syncwav/Context.h>
-#include <syncwav/io/LocalOutput.h>
-#include <syncwav/Log.h>
+#include <syncwav/context.h>
+#include <syncwav/io/local-output.h>
+#include <syncwav/log.h>
 
 namespace swav {
 LocalOutput::LocalOutput(Context &context, ma_device_id *id,

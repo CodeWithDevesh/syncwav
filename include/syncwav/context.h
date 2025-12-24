@@ -1,9 +1,9 @@
 #pragma once
-#include "Export.h"
+#include "export.h"
 #include "miniaudio.h"
 #include <memory>
 #include <vector>
-#include <syncwav/Format.h>
+#include <syncwav/format.h>
 
 namespace swav {
 
