@@ -1,16 +1,18 @@
-#include "syncwav/format.h"
+#include "syncwav/backend/miniaudio/device.h"
+#include "syncwav/backend/miniaudio/format.h"
 #include <syncwav/context.h>
 #include <syncwav/io/loopback-input.h>
-#include <syncwav/log.h>
 #include <syncwav/io/output.h>
+#include <syncwav/log.h>
 
 namespace swav {
-LoopbackInput::LoopbackInput(Context &context, ma_device_id *deviceId)
+LoopbackInput::LoopbackInput(Context &context, Device dev)
     : Input("Loopback Input", context) {
   log::i("Configuring loopback input device");
   device = new ma_device();
+  ma_device_id id = resolveDevice(dev);
   ma_device_config config = ma_device_config_init(ma_device_type_loopback);
-  config.capture.pDeviceID = deviceId;
+  config.capture.pDeviceID = &id;
   config.capture.format = toMiniaudioFormat(context.format);
   config.capture.channels = context.channels;
   config.sampleRate = context.sampleRate;
@@ -29,9 +31,7 @@ LoopbackInput::LoopbackInput(Context &context, ma_device_id *deviceId)
 
 void LoopbackInput::loopback(ma_device *pDevice, void *pOutput,
                              const void *pInput, ma_uint32 frameCount) {
-  for (std::shared_ptr<Output> output : context.outputs) {
-    output->write(pInput, frameCount);
-  }
+  write(pInput, frameCount);
 }
 
 void LoopbackInput::staticLoopback(ma_device *pDevice, void *pOutput,

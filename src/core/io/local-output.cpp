@@ -1,15 +1,17 @@
+#include "syncwav/backend/miniaudio/device.h"
 #include <syncwav/context.h>
 #include <syncwav/io/local-output.h>
 #include <syncwav/log.h>
+#include <syncwav/backend/miniaudio/format.h>
 
 namespace swav {
-LocalOutput::LocalOutput(Context &context, ma_device_id *id,
-                         ma_uint32 bufferSizeInFrames)
-    : Output("Local Output", context, bufferSizeInFrames) {
+LocalOutput::LocalOutput(Context &context, Device dev)
+    : Output("Local Output", context) {
   log::i("Configuring local output device");
   device = new ma_device();
+  ma_device_id id = resolveDevice(dev);
   ma_device_config config = ma_device_config_init(ma_device_type_playback);
-  config.playback.pDeviceID = id;
+  config.playback.pDeviceID = &id;
   config.playback.format = toMiniaudioFormat(context.format);
   config.playback.channels = context.channels;
   config.sampleRate = context.sampleRate;

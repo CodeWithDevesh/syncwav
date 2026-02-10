@@ -1,11 +1,11 @@
-#include "syncwav/format.h"
 #include <chrono>
 #include <stdexcept>
+#include <syncwav/backend/ffmpeg/format.h>
+#include <syncwav/context.h>
 #include <syncwav/io/file-input.h>
+#include <syncwav/io/output.h>
 #include <syncwav/log.h>
 #include <thread>
-#include <syncwav/context.h>
-#include <syncwav/io/output.h>
 
 namespace swav {
 
@@ -41,7 +41,7 @@ FileAudioInput::FileAudioInput(Context &context, const char *filePath)
 
   packet = av_packet_alloc();
   frame = av_frame_alloc();
-  running = new std::atomic<bool>(false);
+  running = false;
 }
 
 FileAudioInput::~FileAudioInput() {
@@ -51,40 +51,35 @@ FileAudioInput::~FileAudioInput() {
   swr_free(&swrCtx);
   avcodec_free_context(&codecCtx);
   avformat_close_input(&fmtCtx);
-  delete (running);
 }
 
 void FileAudioInput::start() {
-  if (*running)
+  if (running)
     return;
   Input::start();
-  *running = true;
-  thread = new std::thread(run, running, fmtCtx, codecCtx, swrCtx, packet,
-                           frame, streamIndex, std::ref(context));
+  running = true;
+  thread = std::thread(&FileAudioInput::run, this);
 }
 
 void FileAudioInput::stop() {
-  if (!*running)
+  if (!running)
     return;
   Input::stop();
-  *running = false;
-  thread->join();
-  delete (thread);
+  running = false;
+  if (thread.joinable())
+    thread.join();
 }
 
-void FileAudioInput::run(std::atomic<bool> *running, AVFormatContext *fmtCtx,
-                         AVCodecContext *codecCtx, SwrContext *swrCtx,
-                         AVPacket *packet, AVFrame *frame, int streamIndex,
-                         Context &context) {
-  while (*running && av_read_frame(fmtCtx, packet) >= 0) {
+void FileAudioInput::run() {
+  while (running && av_read_frame(fmtCtx, packet) >= 0) {
     if (packet->stream_index == streamIndex) {
       avcodec_send_packet(codecCtx, packet);
-      while (*running && avcodec_receive_frame(codecCtx, frame) == 0) {
+      while (running && avcodec_receive_frame(codecCtx, frame) == 0) {
         uint8_t **outData = nullptr;
         int outLinesize;
         int outNbSamples = av_rescale_rnd(
             swr_get_delay(swrCtx, codecCtx->sample_rate) + frame->nb_samples,
-            48000, codecCtx->sample_rate, AV_ROUND_UP);
+            context.sampleRate, codecCtx->sample_rate, AV_ROUND_UP);
 
         av_samples_alloc_array_and_samples(&outData, &outLinesize,
                                            context.channels, outNbSamples,
@@ -94,20 +89,12 @@ void FileAudioInput::run(std::atomic<bool> *running, AVFormatContext *fmtCtx,
             swrCtx, outData, outNbSamples,
             (const uint8_t **)frame->extended_data, frame->nb_samples);
 
-        int bufferSize = av_samples_get_buffer_size(
-            &outLinesize, context.channels, samplesConverted,
-            toFFmpegFormat(context.format), 0);
-
-        for (auto output : context.outputs) {
-          while (output->availableWrite() < samplesConverted) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            if (!*running)
-              break;
-          }
-          if (!*running)
+        while (availableWrite() < samplesConverted) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(1));
+          if (!running)
             break;
-          output->write(outData[0], samplesConverted);
         }
+        write(outData[0], samplesConverted);
         av_freep(&outData[0]);
         av_freep(&outData);
       }

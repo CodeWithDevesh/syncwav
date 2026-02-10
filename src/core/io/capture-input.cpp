@@ -1,15 +1,18 @@
+#include "syncwav/backend/miniaudio/device.h"
+#include <syncwav/backend/miniaudio/format.h>
 #include <syncwav/context.h>
 #include <syncwav/io/capture-input.h>
-#include <syncwav/log.h>
 #include <syncwav/io/output.h>
+#include <syncwav/log.h>
 
 namespace swav {
-CaptureInput::CaptureInput(Context &context, ma_device_id *id)
+CaptureInput::CaptureInput(Context &context, Device device_info)
     : Input("Capture Input", context) {
   log::i("Configuring capture input device");
   device = new ma_device();
+  ma_device_id id = resolveDevice(device_info);
   ma_device_config config = ma_device_config_init(ma_device_type_capture);
-  config.capture.pDeviceID = id;
+  config.capture.pDeviceID = &id;
   config.capture.format = toMiniaudioFormat(context.format);
   config.capture.channels = context.channels;
   config.sampleRate = context.sampleRate;
@@ -27,9 +30,7 @@ CaptureInput::CaptureInput(Context &context, ma_device_id *id)
 
 void CaptureInput::loopback(ma_device *pDevice, void *pOutput,
                             const void *pInput, ma_uint32 frameCount) {
-  for (std::shared_ptr<Output> output : context.outputs) {
-    output->write(pInput, frameCount);
-  }
+  write(pInput, frameCount);
 }
 
 void CaptureInput::staticLoopback(ma_device *pDevice, void *pOutput,

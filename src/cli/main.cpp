@@ -1,16 +1,14 @@
-﻿#include "syncwav/format.h"
-#include "syncwav/io/tcp-input.h"
-#include "syncwav/io/tcp-output.h"
+﻿#include "syncwav/context.h"
+#include "syncwav/format.h"
 #include "syncwav/log.h"
 #include "syncwav/utils.h"
 #include <CLI/CLI.hpp>
 #include <iostream>
 #include <string>
 #include <syncwav/core.h>
-#include <syncwav/io/capture-input.h>
-#include <syncwav/io/file-input.h>
-#include <syncwav/io/local-output.h>
-#include <syncwav/io/loopback-input.h>
+#include <syncwav/factories/input-factory.h>
+#include <syncwav/factories/output-factory.h>
+#include <syncwav/platform/device.h>
 
 enum class INPUT_MODE {
   LOOPBACK,
@@ -27,58 +25,6 @@ enum class OUTPUT_MODE {
   UDP,
   OUTPUT_MODE_COUNT, // Always keep this at end
 };
-
-std::shared_ptr<swav::Input> getInput(INPUT_MODE mode, int device,
-                                      std::string file, std::string ip,
-                                      int port, swav::Context &context) {
-  std::shared_ptr<swav::Input> input;
-  if (mode == INPUT_MODE::LOOPBACK) {
-    ma_device_id *id = NULL;
-    std::vector<swav::Device> devices;
-    if (device > -1) {
-      devices = swav::getPlaybackDevices();
-      id = &(devices[device].id);
-    }
-
-    input = std::make_shared<swav::LoopbackInput>(context, id);
-  } else if (mode == INPUT_MODE::CAPTURE) {
-    ma_device_id *id = NULL;
-    std::vector<swav::Device> devices;
-    if (device > -1) {
-      devices = swav::getCaptureDevices();
-      id = &(devices[device].id);
-    }
-
-    input = std::make_shared<swav::CaptureInput>(context, id);
-  } else if (mode == INPUT_MODE::FILE) {
-    input = std::make_shared<swav::FileAudioInput>(context, file.c_str());
-  } else if (mode == INPUT_MODE::TCP) {
-    input = std::make_shared<swav::TCPInput>(context, ip.c_str(), port);
-  } else {
-    std::exit(0);
-  }
-  return input;
-}
-
-std::shared_ptr<swav::Output> getOutput(OUTPUT_MODE mode, int device,
-                                        std::string ip, int port,
-                                        swav::Context &context) {
-  std::shared_ptr<swav::Output> output;
-  if (mode == OUTPUT_MODE::LOCAL) {
-    ma_device_id *id = NULL;
-    std::vector<swav::Device> devices;
-    if (device > -1) {
-      devices = swav::getPlaybackDevices();
-      id = &(devices[device].id);
-    }
-    output = std::make_shared<swav::LocalOutput>(context, id, 5000);
-  } else if (mode == OUTPUT_MODE::TCP) {
-    output = std::make_shared<swav::TCPOutput>(context, ip.c_str(), port, 5000);
-  } else {
-    std::exit(0);
-  }
-  return output;
-}
 
 void printVersion() {
   std::string version = swav::getVersion();
@@ -124,14 +70,22 @@ void start(INPUT_MODE iMode, std::vector<OUTPUT_MODE> oModes, int iDevice,
   swav::ContextConfig config;
   config.channels = 2;
   config.format = swav::AudioFormat::S16;
+
   swav::Context context = swav::init(config);
-  swav::setInput(context, getInput(iMode, iDevice, file, ip, port, context));
+
+  swav::CaptureInputFactory factory =
+      swav::CaptureInputFactory(swav::getDefaultCaptureDevice());
+
+  swav::setInput(context, factory);
+
   for (auto oMode : oModes) {
     if (oMode == OUTPUT_MODE::LOCAL)
-      for (auto device : oDevice)
-        swav::addOutput(context, getOutput(oMode, device, ip, port, context));
-    else
-      swav::addOutput(context, getOutput(oMode, -1, ip, port, context));
+      for (auto device : oDevice) {
+
+        swav::LocalOutputFactory factory =
+            swav::LocalOutputFactory(swav::getPlaybackDevices()[device]);
+        swav::addOutput(context, factory);
+      }
   }
 
   swav::start(context);

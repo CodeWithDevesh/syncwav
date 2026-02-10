@@ -1,11 +1,12 @@
-#include "syncwav/format.h"
-#include <algorithm>
+#include "syncwav/factories/input-factory.h"
+#include "syncwav/factories/output-factory.h"
 #include <stdexcept>
 #include <string>
 #include <syncwav/context.h>
 #include <syncwav/io/input.h>
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
+#include <syncwav/backend/miniaudio/format.h>
 
 namespace swav {
 
@@ -18,8 +19,11 @@ SWAV_API Context init(const ContextConfig &config) {
   context.channels = config.channels;
   context.format = config.format;
   context.sampleRate = config.sampleRate;
+  context.bufferSizeInFrames = config.bufferSizeInFrames;
   context.framesSizeInBytes =
       ma_get_bytes_per_frame(toMiniaudioFormat(config.format), config.channels);
+  context.input = nullptr;
+  context.stopped = true;
 
   log::i("[context] Initialized successfully");
   log::d("[context] frameSizeInBytes: {}", context.framesSizeInBytes);
@@ -32,57 +36,57 @@ SWAV_API void uninit(Context &context) {
   log::i("[context] Uninitialized successfully");
 }
 
-SWAV_API void setInput(Context &context, std::shared_ptr<Input> input) {
+SWAV_API void setInput(Context &context, InputFactory &factory) {
   if (!context.stopped) {
     log::d("[engine] Input change detected, restarting engine...");
     stop(context);
-    context.input = input;
+    if (context.input)
+      delete context.input;
+    context.input = factory.getInstance(context);
     start(context);
   } else {
-    context.input = input;
+    if (context.input)
+      delete context.input;
+    context.input = factory.getInstance(context);
   }
   log::i("[engine] Input set: {}", context.input->name);
 }
 
-SWAV_API void addOutput(Context &context, std::shared_ptr<Output> output) {
-  for (auto &o : context.outputs) {
-    if (o.get() == output.get()) {
-      log::d("[engine] Output already present, skipping add");
-      return;
-    }
-  }
+SWAV_API void addOutput(Context &context, OutputFactory &factory) {
   if (!context.stopped) {
     log::d("Adding new output, restarting engine...");
     stop(context);
-    context.outputs.push_back(output);
+    context.outputs.push_back(factory.getInstance(context));
     start(context);
   } else {
-    context.outputs.push_back(output);
+    context.outputs.push_back(factory.getInstance(context));
   }
-  log::i("[engine] Output added: {}", output->name);
+  log::i("[engine] Output added: {}",
+         context.outputs[context.outputs.size() - 1]->name);
 }
 
-SWAV_API void removeOutput(Context &context, std::shared_ptr<Output> output) {
-  auto &vec = context.outputs;
-  auto remover = [&]() {
-    vec.erase(
-        std::remove_if(vec.begin(), vec.end(),
-                       [&](const auto &o) { return o.get() == output.get(); }),
-        vec.end());
-  };
-  if (!context.stopped) {
-    log::d("[engine] Removing output, restarting engine...");
-    stop(context);
-    remover();
-    start(context);
-  } else {
-    remover();
-  }
-  log::i("[engine] Output removed: {}", output->name);
-}
+// SWAV_API void removeOutput(Context &context, std::shared_ptr<Output> output)
+// {
+//   auto &vec = context.outputs;
+//   auto remover = [&]() {
+//     vec.erase(
+//         std::remove_if(vec.begin(), vec.end(),
+//                        [&](const auto &o) { return o.get() == output.get();
+//                        }),
+//         vec.end());
+//   };
+//   if (!context.stopped) {
+//     log::d("[engine] Removing output, restarting engine...");
+//     stop(context);
+//     remover();
+//     start(context);
+//   } else {
+//     remover();
+//   }
+//   log::i("[engine] Output removed: {}", output->name);
+// }
 
 SWAV_API void start(Context &context) {
-
   if (context.stopped) {
     log::i("[engine] Starting syncwav engine...");
     log::d("[engine] Input: {}", context.input->name);

@@ -1,129 +1,28 @@
-#include "syncwav/utils.h"
+#include "syncwav/tick/tick-producer.h"
 #include <syncwav/context.h>
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
-#include <syncwav/middlewares/middleware.h>
 
 namespace swav {
 
-Output::Output(const char *name, Context &context, uint32_t bufferSizeInFrames,
-               uint32_t delay)
-    : name(name), context(context), delay(delay) {
+Output::Output(const char *name, Context &context)
+    : TickProducer(context), name(name) {
   log::i("[output] Initializing Output: {}", name);
   log::d("[output] target: {}, channels: {}, format: {}, buffer_size: {}", name,
          context.channels, toCString(context.format),
-         bufferSizeInFrames * context.framesSizeInBytes);
-  buffer = new ma_pcm_rb();
-  if (ma_pcm_rb_init(toMiniaudioFormat(context.format), context.channels,
-                     bufferSizeInFrames, NULL, NULL, buffer) != MA_SUCCESS) {
-    log::e("Failed to allocate buffer for {}", name);
-    std::exit(-1);
-  }
-  log::i("Buffer for {} allocated successfully", name);
+         context.bufferSizeInFrames * context.framesSizeInBytes);
 }
 
-Output::~Output() {
-  log::i("[output] Uninitializing Output: {}", name);
-  if (buffer) {
-    ma_pcm_rb_uninit(buffer);
-    delete buffer;
-  }
+Output::~Output() { log::i("[output] Uninitializing Output: {}", name); }
+
+void Output::start() {
+  TickProducer::start();
+  log::i("Starting Output: {}", name);
 }
 
-void Output::write(const void *data, uint32_t noOfFrames, int32_t src) {
-  uint32_t dest = src + 1;
-  if (dest >= middlewares.size()) {
-    implicitWrite(data, noOfFrames);
-    return;
-  }
-  middlewares[dest]->write(data, noOfFrames);
+void Output::stop() {
+  TickProducer::stop();
+  log::i("Stopping Output: {}", name);
 }
-
-uint32_t Output::availableWrite(int32_t src) {
-  uint32_t dest = src + 1;
-  if (dest >= middlewares.size()) {
-    return implicitAvailableWrite();
-  }
-  return middlewares[dest]->availableWrite();
-}
-
-void Output::implicitWrite(const void *data, uint32_t noOfFrames) {
-  void *bufferOut;
-  ma_uint32 framesToWrite = noOfFrames;
-  ma_uint32 framesWritten = 0;
-  noOfFrames = std::min(noOfFrames, implicitAvailableWrite());
-  log::t("Writing {} frames", noOfFrames);
-  while (framesWritten < noOfFrames) {
-    if (ma_pcm_rb_acquire_write(buffer, &framesToWrite, &bufferOut) !=
-        MA_SUCCESS) {
-      log::e("Failed to aquire write on {}'s buffer", name);
-      return;
-    }
-    memcpy(bufferOut,
-           static_cast<const uint8_t *>(data) +
-               (framesWritten * context.framesSizeInBytes),
-           static_cast<size_t>(framesToWrite) * context.framesSizeInBytes);
-    ma_pcm_rb_commit_write(buffer, framesToWrite);
-    log::t("Written {} frames", framesToWrite);
-    framesWritten += framesToWrite;
-    framesToWrite = noOfFrames - framesWritten;
-  }
-}
-
-void Output::read(void *outBuff, uint32_t frames) {
-  ma_uint32 framesToRead = frames;
-  uint32_t framesRead = 0;
-  frames = std::min(frames, availableRead());
-  log::t("Reading {} frames", frames);
-  while (framesRead < frames) {
-    void *bufferin;
-    if (ma_pcm_rb_acquire_read(buffer, &framesToRead, &bufferin) !=
-        MA_SUCCESS) {
-      log::t("Failed to acquire read on buffer");
-      return;
-    }
-    memcpy(static_cast<uint8_t *>(outBuff) +
-               (framesRead * context.framesSizeInBytes),
-           bufferin, framesToRead * context.framesSizeInBytes);
-    ma_pcm_rb_commit_read(buffer, framesToRead);
-    log::t("Read {} frames", framesToRead);
-    framesRead += framesToRead;
-    framesToRead = frames - framesRead;
-  }
-}
-
-uint32_t Output::implicitAvailableWrite() {
-  return ma_pcm_rb_available_write(buffer);
-}
-uint32_t Output::availableRead() {
-  uint32_t av = ma_pcm_rb_available_read(buffer);
-  if (av < delay) {
-    playing = false;
-    return 0;
-  }
-  if (av >= 2 * delay) {
-    playing = true;
-    return av;
-  }
-  if (av > delay && playing) {
-    return av;
-  } else {
-    return 0;
-  }
-}
-
-int32_t Output::addMiddleware(Middleware &middleware) {
-  if (playing) {
-    log::e("[output] Cannot add middleware: {} while {} is running",
-           middleware.name, name);
-    return -1;
-  }
-  middlewares.push_back(middleware.clone());
-  return middlewares.size() - 1;
-}
-
-void Output::start() { log::i("Starting Output: {}", name); }
-
-void Output::stop() { log::i("Stopping Output: {}", name); }
 
 } // namespace swav

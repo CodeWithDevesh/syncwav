@@ -3,11 +3,18 @@
 
 namespace swav {
 Input::Input(const char *name, Context &context)
-    : name(name), context(context) {
+    : TickConsumer(context), name(name) {
   log::i("Initializing Input: {}", name);
 }
 
-void Input::start() { log::i("Starting Input: {}", name); }
+void Input::start() {
+  log::i("Starting Input: {}", name);
+  TickConsumer::start();
+}
 
-void Input::stop() { log::i("Stopping Input: {}", name); }
+void Input::stop() {
+  log::i("Stopping Input: {}", name);
+  TickConsumer::stop();
+}
+
 } // namespace swav

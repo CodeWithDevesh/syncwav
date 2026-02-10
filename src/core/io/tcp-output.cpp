@@ -6,8 +6,8 @@
 
 namespace swav {
 
-TCPOutput::TCPOutput(Context &context, const char *ip, int port, int buffSiz)
-    : Output("TCP Output", context, buffSiz), ip(ip), port(port) {
+TCPOutput::TCPOutput(Context &context, const char *ip, int port)
+    : Output("TCP Output", context), ip(ip), port(port) {
   ix::initNetSystem();
   server = new ix::WebSocketServer(port, ip);
   server->setOnClientMessageCallback(
@@ -55,7 +55,7 @@ void TCPOutput::run() {
     using namespace std::chrono;
     auto now = steady_clock::now();
     steady_clock::time_point nextTick = now + 10ms;
-    void *buffer = malloc(context.framesSizeInBytes * 48000);
+    void *buff = malloc(context.framesSizeInBytes * 48000);
     while (running) {
       std::this_thread::sleep_until(nextTick);
 
@@ -71,9 +71,9 @@ void TCPOutput::run() {
       framesToSend *= 480;
       // ma_uint32 framesToSend = std::min(framesAvailable, 480u);
       log::t("[TCP Output] Gonna send {} frames of audio data.", framesToSend);
-      read(buffer, framesToSend);
+      read(buff, framesToSend);
 
-      std::string_view chunk(reinterpret_cast<const char *>(buffer),
+      std::string_view chunk(reinterpret_cast<const char *>(buff),
                              framesToSend * context.framesSizeInBytes);
       {
         std::lock_guard<std::mutex> lock(socketsMutex);
@@ -85,7 +85,7 @@ void TCPOutput::run() {
       // nextTick += ((framesToSend * 1000) / context.sampleRate) * 1ms;
       nextTick += 5ms;
     }
-    free(buffer);
+    free(buff);
     log::i("[TCP OUTPUT] stopping the server");
     server->stop();
   }));

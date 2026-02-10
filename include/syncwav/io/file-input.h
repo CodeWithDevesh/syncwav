@@ -18,13 +18,10 @@ public:
   void stop() override;
 
 private:
-  static void run(std::atomic<bool> *running, AVFormatContext *fmtCtx,
-                  AVCodecContext *codecCtx, SwrContext *swrCtx,
-                  AVPacket *packet, AVFrame *frame, int streamIndex,
-                  Context &context);
+  void run();
 
 private:
-  std::thread *thread;
+  std::thread thread;
   int streamIndex;
 
   AVFormatContext *fmtCtx;
@@ -32,6 +29,6 @@ private:
   SwrContext *swrCtx;
   AVPacket *packet;
   AVFrame *frame;
-  std::atomic<bool> *running;
+  std::atomic<bool> running;
 };
 } // namespace swav

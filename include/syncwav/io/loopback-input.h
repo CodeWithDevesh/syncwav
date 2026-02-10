@@ -1,10 +1,11 @@
 #pragma once
 #include "input.h"
+#include <syncwav/backend/miniaudio/device.h>
 
 namespace swav {
 class SWAV_API LoopbackInput : public Input {
 public:
-  LoopbackInput(Context &context, ma_device_id *);
+  LoopbackInput(Context &, Device);
   ~LoopbackInput();
   static void staticLoopback(ma_device *pDevice, void *pOutput,
                              const void *pInput, ma_uint32 frameCount);

@@ -8,7 +8,7 @@
 namespace swav {
 class SWAV_API TCPOutput : public Output {
 public:
-  TCPOutput(Context &context, const char *ip, int port, int bufferSizeInFrames);
+  TCPOutput(Context &context, const char *ip, int port);
   ~TCPOutput();
   void start() override;
   void stop() override;
