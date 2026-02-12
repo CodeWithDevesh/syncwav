@@ -36,8 +36,8 @@ SWAV_API void uninit(Context &context);
 
 // Can be used while the engine is running
 // will restart the engine automatically
-SWAV_API void setInput(Context &context, InputFactory &factory);
-SWAV_API void addOutput(Context &context, OutputFactory &factory);
+SWAV_API void setInput(Context &context, const InputFactory &factory);
+SWAV_API void addOutput(Context &context, const OutputFactory &factory);
 // TODO: Implement this function
 // SWAV_API void removeOutput(Context &context, std::shared_ptr<Output>);
 

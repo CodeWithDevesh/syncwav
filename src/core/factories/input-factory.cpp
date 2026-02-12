@@ -10,26 +10,26 @@ namespace swav {
 
 CaptureInputFactory::CaptureInputFactory(Device d) : device(d) {}
 
-Input *CaptureInputFactory::getInstance(Context &context) {
+Input *CaptureInputFactory::getInstance(Context &context) const {
   return new CaptureInput(context, device);
 }
 
 LoopbackInputFactory::LoopbackInputFactory(Device d) : device(d) {}
 
-Input *LoopbackInputFactory::getInstance(Context &context) {
+Input *LoopbackInputFactory::getInstance(Context &context) const {
   return new LoopbackInput(context, device);
 }
 
 FileInputFactory::FileInputFactory(const char *filePath) : filePath(filePath) {}
 
-Input *FileInputFactory::getInstance(Context &context) {
+Input *FileInputFactory::getInstance(Context &context) const {
   return new FileAudioInput(context, filePath);
 }
 
 TcpInputFactory::TcpInputFactory(const char *ip, int port)
     : ip(ip), port(port) {}
 
-Input *TcpInputFactory::getInstance(Context &context) {
+Input *TcpInputFactory::getInstance(Context &context) const {
   return new TCPInput(context, ip, port);
 }
 

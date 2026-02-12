@@ -36,7 +36,7 @@ SWAV_API void uninit(Context &context) {
   log::i("[context] Uninitialized successfully");
 }
 
-SWAV_API void setInput(Context &context, InputFactory &factory) {
+SWAV_API void setInput(Context &context, const InputFactory &factory) {
   if (!context.stopped) {
     log::d("[engine] Input change detected, restarting engine...");
     stop(context);
@@ -52,7 +52,7 @@ SWAV_API void setInput(Context &context, InputFactory &factory) {
   log::i("[engine] Input set: {}", context.input->name);
 }
 
-SWAV_API void addOutput(Context &context, OutputFactory &factory) {
+SWAV_API void addOutput(Context &context, const OutputFactory &factory) {
   if (!context.stopped) {
     log::d("Adding new output, restarting engine...");
     stop(context);

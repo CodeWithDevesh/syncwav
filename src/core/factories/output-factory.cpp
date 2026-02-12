@@ -10,14 +10,14 @@ namespace swav {
 
 LocalOutputFactory::LocalOutputFactory(Device device) : device(device) {}
 
-Output *LocalOutputFactory::getInstance(Context &context) {
+Output *LocalOutputFactory::getInstance(Context &context) const {
   return new LocalOutput(context, device);
 }
 
 TCPOutputFactory::TCPOutputFactory(const char *ip, int port)
     : ip(ip), port(port) {}
 
-Output *TCPOutputFactory::getInstance(Context &context) {
+Output *TCPOutputFactory::getInstance(Context &context) const {
   return new TCPOutput(context, ip, port);
 }
 
