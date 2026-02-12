@@ -26,6 +26,16 @@ enum class OUTPUT_MODE {
   OUTPUT_MODE_COUNT, // Always keep this at end
 };
 
+struct CliConfig {
+  INPUT_MODE input = INPUT_MODE::NONE;
+  std::vector<OUTPUT_MODE> outputs;
+  int inputDevice = -1;
+  std::vector<int> outputDevices;
+  std::string file;
+  std::string ip = "0.0.0.0";
+  int port = 9001;
+};
+
 void printVersion() {
   std::string version = swav::getVersion();
   std::cout << "SyncWav version: " << version << std::endl;
@@ -64,28 +74,70 @@ void listDevices() {
   std::exit(0);
 }
 
-void start(INPUT_MODE iMode, std::vector<OUTPUT_MODE> oModes, int iDevice,
-           std::vector<int> oDevice, std::string file, std::string ip,
-           int port) {
+bool setInput(swav::Context &context, CliConfig &config) {
+  switch (config.input) {
+  case INPUT_MODE::CAPTURE: {
+    swav::Device captureDevice = swav::getDefaultCaptureDevice();
+    if (config.inputDevice != -1) {
+      std::vector<swav::Device> devices = swav::getCaptureDevices();
+      if (devices.size() <= config.inputDevice)
+        return false;
+      captureDevice = devices[config.inputDevice];
+    }
+    swav::setInput(context, swav::CaptureInputFactory(captureDevice));
+  } break;
+  case INPUT_MODE::FILE: {
+    swav::setInput(context, swav::FileInputFactory(config.file.c_str()));
+  } break;
+  default:
+    return false;
+  }
+  return true;
+}
+
+bool setOutputs(swav::Context &context, CliConfig &config) {
+
+  for (auto omode : config.outputs) {
+    switch (omode) {
+    case OUTPUT_MODE::LOCAL: {
+      if (config.outputDevices.size() == 0) {
+        swav::addOutput(context, swav::LocalOutputFactory(
+                                     swav::getDefaultPlaybackDevice()));
+      } else {
+        std::vector<swav::Device> devices = swav::getPlaybackDevices();
+        for (auto deviceId : config.outputDevices) {
+          if (deviceId >= devices.size()) {
+            return false;
+          }
+          swav::addOutput(context, swav::LocalOutputFactory(devices[deviceId]));
+        }
+      }
+    } break;
+
+    default:
+      return false;
+      break;
+    }
+  }
+
+  return true;
+}
+
+void start(CliConfig &cliConfig) {
   swav::ContextConfig config;
   config.channels = 2;
   config.format = swav::AudioFormat::S16;
 
   swav::Context context = swav::init(config);
 
-  swav::CaptureInputFactory factory =
-      swav::CaptureInputFactory(swav::getDefaultCaptureDevice());
+  if (!setInput(context, cliConfig)) {
+    swav::log::e("Something went wrong while configuring input!!");
+    return;
+  }
 
-  swav::setInput(context, factory);
-
-  for (auto oMode : oModes) {
-    if (oMode == OUTPUT_MODE::LOCAL)
-      for (auto device : oDevice) {
-
-        swav::LocalOutputFactory factory =
-            swav::LocalOutputFactory(swav::getPlaybackDevices()[device]);
-        swav::addOutput(context, factory);
-      }
+  if (!setOutputs(context, cliConfig)) {
+    swav::log::e("Something went wrong while configuring outputs!!");
+    return;
   }
 
   swav::start(context);
@@ -116,14 +168,10 @@ GitHub: https://github.com/syncwav/syncwav)");
 
   bool show_version = false;
   bool list_devices = false;
-  int inputDevice = -1;
   swav::log::LogLevel logLevel = swav::log::LogLevel::WARN;
-  std::vector<int> outputDevices;
-  std::string file;
-  std::string ip = "0.0.0.0";
-  int port = 9001;
 
-  INPUT_MODE inputMode = INPUT_MODE::NONE;
+  CliConfig config;
+
   std::map<std::string, INPUT_MODE> inputMap{{"loopback", INPUT_MODE::LOOPBACK},
                                              {"capture", INPUT_MODE::CAPTURE},
                                              {"file", INPUT_MODE::FILE},
@@ -132,33 +180,32 @@ GitHub: https://github.com/syncwav/syncwav)");
   CLI::Transformer inputTransformer(inputMap, CLI::ignore_case);
   inputTransformer.name("");
   inputTransformer.description("");
-  app.add_option("--input,-i", inputMode)
+  app.add_option("--input,-i", config.input)
       ->type_name("<mode>")
       ->description("Input mode: 'loopback' (system audio) or 'capture' "
                     "(microphone) or 'file'")
       ->transform(inputTransformer);
 
-  app.add_option("--file,-f", file)
+  app.add_option("--file,-f", config.file)
       ->type_name("file")
       ->description("File to play the audio from if file input mode is chosen");
 
-  std::vector<OUTPUT_MODE> outputModes;
   std::map<std::string, OUTPUT_MODE> outputMap{{"local", OUTPUT_MODE::LOCAL},
                                                {"tcp", OUTPUT_MODE::TCP},
                                                {"udp", OUTPUT_MODE::UDP}};
   CLI::Transformer outputTransformer(outputMap, CLI::ignore_case);
   outputTransformer.name("");
   outputTransformer.description("");
-  app.add_option("--output,-o", outputModes)
+  app.add_option("--output,-o", config.outputs)
       ->description("One or more output modes: 'local', 'tcp', 'udp'")
       ->type_name("<mode>")
       ->transform(outputTransformer)
       ->expected(0, (int)OUTPUT_MODE::OUTPUT_MODE_COUNT);
 
-  app.add_option("--inputDevice,-I", inputDevice,
+  app.add_option("--inputDevice,-I", config.inputDevice,
                  "ID of input device (optional; defaults to system default)")
       ->type_name("<id>");
-  app.add_option("--device,-d", outputDevices,
+  app.add_option("--device,-d", config.outputDevices,
                  "IDs of output devices to play from (only works if --output "
                  "includes 'local')")
       ->type_name("<id>");
@@ -168,8 +215,8 @@ GitHub: https://github.com/syncwav/syncwav)");
   app.add_flag("--version,-v", show_version,
                "Print version information and exit");
 
-  app.add_option("--ip", ip, "IP for TCP input/output");
-  app.add_option("--port,-p", port, "Port for TCP input/output");
+  app.add_option("--ip", config.ip, "IP for TCP input/output");
+  app.add_option("--port,-p", config.port, "Port for TCP input/output");
 
   std::map<std::string, swav::log::LogLevel> logMap{
       {"trace", swav::log::LogLevel::TRACE},
@@ -191,33 +238,33 @@ GitHub: https://github.com/syncwav/syncwav)");
     if (show_version)
       return;
 
-    if (inputMode == INPUT_MODE::NONE) {
+    if (config.input == INPUT_MODE::NONE) {
       throw CLI::RequiredError("--input");
     }
 
-    if (inputMode == INPUT_MODE::TCP ||
-        std::find(outputModes.begin(), outputModes.end(), OUTPUT_MODE::TCP) !=
-            outputModes.end()) {
-      if (ip.size() == 0) {
+    if (config.input == INPUT_MODE::TCP ||
+        std::find(config.outputs.begin(), config.outputs.end(),
+                  OUTPUT_MODE::TCP) != config.outputs.end()) {
+      if (config.ip.size() == 0) {
         throw CLI::RequiredError(
             "ip to connect to required!! Specify with --ip");
       }
-      if (port == -1)
+      if (config.port == -1)
         throw CLI::RequiredError("port required!! Specify with -p");
     }
 
-    if (outputModes.empty()) {
+    if (config.outputs.empty()) {
       throw CLI::RequiredError(
           "--output (specify at least one: 'local', 'tcp', or 'udp')");
     }
 
-    if (inputMode == INPUT_MODE::FILE && file.size() <= 0) {
+    if (config.input == INPUT_MODE::FILE && config.file.size() <= 0) {
       throw CLI::RequiredError("--file (specify the file to play from)");
     }
 
-    if (std::find(outputModes.begin(), outputModes.end(), OUTPUT_MODE::LOCAL) !=
-            outputModes.end() &&
-        outputDevices.size() <= 0) {
+    if (std::find(config.outputs.begin(), config.outputs.end(),
+                  OUTPUT_MODE::LOCAL) != config.outputs.end() &&
+        config.outputs.size() <= 0) {
       throw CLI::ValidationError(
           "Missing --device: Required when using 'local' output mode.\n"
           "Run with --list-devices to see available device IDs.");
@@ -233,7 +280,7 @@ GitHub: https://github.com/syncwav/syncwav)");
   if (show_version)
     printVersion();
 
-  start(inputMode, outputModes, inputDevice, outputDevices, file, ip, port);
+  start(config);
 
   return 0;
 }
