@@ -9,6 +9,7 @@ namespace swav {
 TCPOutput::TCPOutput(Context &context, const char *ip, int port)
     : Output("TCP Output", context), ip(ip), port(port) {
   ix::initNetSystem();
+  priority = .5;
   server = new ix::WebSocketServer(port, ip);
   server->setOnClientMessageCallback(
       [&](std::shared_ptr<ix::ConnectionState> connectionState,

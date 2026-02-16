@@ -12,7 +12,7 @@ public:
   TickProducer(Context &context);
   virtual ~TickProducer();
 
-  inline int getPriority() { return priority; }
+  inline float getPriority() { return priority; }
   inline void setAuthority(bool auth) { hasAuthority = auth; };
   void write(const void *data, uint32_t noOfFrames);
   uint32_t availableWrite();
@@ -22,7 +22,7 @@ public:
   virtual inline void stop() { stopped = true; }
 
 protected:
-  int priority = 0;
+  float priority = 0;
   int tickThreshold;
   bool hasAuthority = false;
   ma_pcm_rb *buffer;

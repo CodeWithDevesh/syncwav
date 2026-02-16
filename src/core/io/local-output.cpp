@@ -7,6 +7,7 @@
 namespace swav {
 LocalOutput::LocalOutput(Context &context, Device dev)
     : Output("Local Output", context) {
+  priority = 1;
   log::i("Configuring local output device");
   device = new ma_device();
   ma_device_id id = resolveDevice(dev);
