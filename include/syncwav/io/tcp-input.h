@@ -21,5 +21,6 @@ private:
   ix::WebSocket *websocket = nullptr;
   const char *ip;
   int port;
+  std::thread congestionThread;
 };
 } // namespace swav

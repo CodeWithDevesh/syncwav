@@ -57,7 +57,7 @@ uint32_t TickProducer::availableRead() {
   return ma_pcm_rb_available_read(buffer);
 }
 
-void TickProducer::read(void *buff, uint32_t frames) {
+void TickProducer::read(void *buff, uint32_t &frames) {
   // Send Ticks
   log::t("[output] Reading from buffer");
   log::t("[output] Available frames {}", availableRead());

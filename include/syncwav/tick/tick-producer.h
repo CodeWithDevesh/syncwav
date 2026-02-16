@@ -27,7 +27,7 @@ protected:
   bool hasAuthority = false;
   ma_pcm_rb *buffer;
   uint32_t availableRead();
-  void read(void *buffer, uint32_t noOfFrames);
+  void read(void *buffer, uint32_t &noOfFrames);
   Context &context;
   bool stopped = true;
 

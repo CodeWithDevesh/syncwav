@@ -89,6 +89,10 @@ bool setInput(swav::Context &context, CliConfig &config) {
   case INPUT_MODE::FILE: {
     swav::setInput(context, swav::FileInputFactory(config.file.c_str()));
   } break;
+  case INPUT_MODE::TCP: {
+    swav::setInput(context,
+                   swav::TcpInputFactory(config.ip.c_str(), config.port));
+  } break;
   default:
     return false;
   }
@@ -112,6 +116,11 @@ bool setOutputs(swav::Context &context, CliConfig &config) {
           swav::addOutput(context, swav::LocalOutputFactory(devices[deviceId]));
         }
       }
+    } break;
+
+    case OUTPUT_MODE::TCP: {
+      swav::addOutput(context,
+                      swav::TCPOutputFactory(config.ip.c_str(), config.port));
     } break;
 
     default:
