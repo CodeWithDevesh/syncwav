@@ -1,0 +1,15 @@
+[submodule "external/spdlog"]
+	path = external/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "external/cli11"]
+	path = external/cli11
+	url = https://github.com/CLIUtils/CLI11.git
+[submodule "external/ftxui"]
+	path = external/ftxui
+	url = https://github.com/ArthurSonzogni/FTXUI.git
+[submodule "external/ixwebsocket"]
+	path = external/ixwebsocket
+	url = https://github.com/machinezone/IXWebSocket.git
+[submodule "external/miniaudio"]
+	path = external/miniaudio
+	url = https://github.com/mackron/miniaudio.git
