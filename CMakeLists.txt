@@ -21,7 +21,7 @@ option(SWAV_BUILD_CLI "Build the Command Line Interface executable" ON)
 option(SWAV_BUILD_TUI "Build the Terminal UI executable" ON)
 option(SWAV_STRICT_WARNINGS
        "Enable strict compiler warnings (-Wall -Wextra -Wpedantic)" ON)
-
+option(SWAV_ENABLE_LOOPBACK "Enable loopback input mode" ON)
 # ==============================================================================
 # SYSTEM DEPENDENCIES
 # ==============================================================================
@@ -69,6 +69,15 @@ endif()
 if(SWAV_ENABLE_WEBSOCKETS)
   target_link_libraries(syncwav_core PUBLIC ixwebsocket)
   target_compile_definitions(syncwav_core PUBLIC SWAV_USE_WEBSOCKETS)
+endif()
+
+if(SWAV_ENABLE_LOOPBACK)
+  if(NOT WIN32)
+    message(STATUS "Loopback mode is only supported on windows!")
+    set(SWAV_ENABLE_LOOPBACK OFF)
+  else()
+    target_compile_definitions(syncwav_core PUBLIC SWAV_ENABLE_LOOPBACK)
+  endif()
 endif()
 
 if(ZLIB_FOUND)
@@ -132,29 +141,33 @@ endif()
 # Determine true FFmpeg state based on previous find_package/path checks
 set(ACTUAL_FFMPEG_STATE "OFF")
 if(SWAV_ENABLE_FFMPEG)
-    if((NOT WIN32 AND FFMPEG_FOUND) OR (WIN32 AND EXISTS "${FFMPEG_ROOT}/include"))
-        set(ACTUAL_FFMPEG_STATE "ON")
-    else()
-        set(ACTUAL_FFMPEG_STATE "OFF (Requested, but not found)")
-    endif()
+  if((NOT WIN32 AND FFMPEG_FOUND) OR (WIN32 AND EXISTS "${FFMPEG_ROOT}/include"
+                                     ))
+    set(ACTUAL_FFMPEG_STATE "ON")
+  else()
+    set(ACTUAL_FFMPEG_STATE "OFF (Requested, but not found)")
+  endif()
 endif()
 
 set(ACTUAL_ZLIB_STATE "OFF")
 if(ZLIB_FOUND)
-    set(ACTUAL_ZLIB_STATE "ON")
+  set(ACTUAL_ZLIB_STATE "ON")
 endif()
 
 set(DISPLAY_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 if(NOT DISPLAY_BUILD_TYPE)
-    set(DISPLAY_BUILD_TYPE "Default (None)")
+  set(DISPLAY_BUILD_TYPE "Default (None)")
 endif()
 
 message(STATUS "")
 message(STATUS "=======================================================")
 message(STATUS " syncwav v${PROJECT_VERSION} - Build Summary")
 message(STATUS "=======================================================")
-message(STATUS " System          : ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_PROCESSOR})")
-message(STATUS " Compiler        : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
+message(
+  STATUS " System          : ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_PROCESSOR})")
+message(
+  STATUS
+    " Compiler        : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
 message(STATUS " Build Type      : ${DISPLAY_BUILD_TYPE}")
 message(STATUS " Strict Warnings : ${SWAV_STRICT_WARNINGS}")
 message(STATUS "-------------------------------------------------------")

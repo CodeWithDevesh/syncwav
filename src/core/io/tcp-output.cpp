@@ -1,17 +1,20 @@
-#include "ixwebsocket/IXNetSystem.h"
-#include "ixwebsocket/IXWebSocketMessageType.h"
 #include "syncwav/context.h"
 #include <algorithm>
 #include <chrono>
 #include <string>
 #include <syncwav/io/tcp-output.h>
 #include <syncwav/log.h>
+#ifdef SWAV_USE_WEBSOCKETS
+#include "ixwebsocket/IXNetSystem.h"
+#include "ixwebsocket/IXWebSocketMessageType.h"
+#endif
 
 using namespace std::chrono;
 namespace swav {
 
 TCPOutput::TCPOutput(Context &context, const char *ip, int port)
     : Output("TCP Output", context), ip(ip), port(port) {
+#ifdef SWAV_USE_WEBSOCKETS
   ix::initNetSystem();
   priority = .5;
   delay = microseconds(30000);
@@ -33,33 +36,50 @@ TCPOutput::TCPOutput(Context &context, const char *ip, int port)
           calculateDelay(avlPer);
         }
       });
+#else
+  throw std::runtime_error(
+      "syncwav was compiled without network support. tcp output is disabled.");
+#endif
 }
 
 TCPOutput::~TCPOutput() {
+#ifdef SWAV_USE_WEBSOCKETS
   ix::uninitNetSystem();
   stop();
   delete (server);
+#endif
 }
 
 void TCPOutput::start() {
+#ifdef SWAV_USE_WEBSOCKETS
   if (!running) {
     running = true;
     Output::start();
     run();
   }
+#else
+  throw std::runtime_error(
+      "syncwav was compiled without network support. tcp output is disabled.");
+#endif
 }
 
 void TCPOutput::stop() {
+#ifdef SWAV_USE_WEBSOCKETS
   if (running) {
     Output::stop();
     running = false;
     if (broadcastThread.joinable())
       broadcastThread.join();
   }
+#else
+  throw std::runtime_error(
+      "syncwav was compiled without network support. tcp output is disabled.");
+#endif
 }
 
 // Continously send frames to the clients
 void TCPOutput::run() {
+#ifdef SWAV_USE_WEBSOCKETS
   log::i("[TCP OUTPUT] starting the server on {}:{}", ip, port);
   server->listenAndStart();
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -94,12 +114,17 @@ void TCPOutput::run() {
     log::i("[TCP OUTPUT] stopping the server");
     server->stop();
   }));
+#else
+  throw std::runtime_error(
+      "syncwav was compiled without network support. tcp output is disabled.");
+#endif
 }
 
 // Adjust send rate based on feedback from client
 // avlPer is the percentage of available space in client buffer
 void TCPOutput::calculateDelay(int avlPer) {
-  if(ignoreChange){
+#ifdef SWAV_USE_WEBSOCKETS
+  if (ignoreChange) {
     ignoreChange--;
     return;
   }
@@ -129,6 +154,10 @@ void TCPOutput::calculateDelay(int avlPer) {
     ignoreChange = 5;
   }
   delay = microseconds(d);
+#else
+  throw std::runtime_error(
+      "syncwav was compiled without network support. tcp output is disabled.");
+#endif
 }
 
 } // namespace swav

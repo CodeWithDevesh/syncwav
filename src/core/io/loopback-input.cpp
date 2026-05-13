@@ -1,15 +1,18 @@
-#include "syncwav/backend/miniaudio/device.h"
-#include "syncwav/backend/miniaudio/format.h"
+#include <stdexcept>
 #include <syncwav/context.h>
 #include <syncwav/io/loopback-input.h>
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
-#include <stdexcept>
+
+#ifdef SWAV_ENABLE_LOOPBACK
+#include "syncwav/backend/miniaudio/format.h"
+#endif
 
 namespace swav {
 LoopbackInput::LoopbackInput(Context &context, Device dev)
     : Input("Loopback Input", context) {
   log::i("Configuring loopback input device");
+#ifdef SWAV_ENABLE_LOOPBACK
   device = new ma_device();
   ma_device_id id = resolveDevice(dev);
   ma_device_config config = ma_device_config_init(ma_device_type_loopback);
@@ -28,36 +31,62 @@ LoopbackInput::LoopbackInput(Context &context, Device dev)
   }
 
   log::i("Loopback Input successfully initialized");
+#else
+  throw std::runtime_error("syncwav was compiled without loopback support. "
+                           "loopback input is disabled.");
+#endif
 }
 
 void LoopbackInput::loopback(ma_device *pDevice, void *pOutput,
                              const void *pInput, ma_uint32 frameCount) {
+#ifdef SWAV_ENABLE_LOOPBACK
   write(pInput, frameCount);
+#else
+  throw std::runtime_error("syncwav was compiled without loopback support. "
+                           "loopback input is disabled.");
+#endif
 }
 
 void LoopbackInput::staticLoopback(ma_device *pDevice, void *pOutput,
                                    const void *pInput, ma_uint32 frameCount) {
+#ifdef SWAV_ENABLE_LOOPBACK
   LoopbackInput *instance = static_cast<LoopbackInput *>(pDevice->pUserData);
   if (instance) {
     instance->loopback(pDevice, pOutput, pInput, frameCount);
   }
+#else
+  throw std::runtime_error("syncwav was compiled without loopback support. "
+                           "loopback input is disabled.");
+#endif
 }
 
 void LoopbackInput::stop() {
+#ifdef SWAV_ENABLE_LOOPBACK
   log::i("Stopping input: {}", name);
   ma_device_stop(device);
+#else
+  throw std::runtime_error("syncwav was compiled without loopback support. "
+                           "loopback input is disabled.");
+#endif
 }
 
 void LoopbackInput::start() {
+#ifdef SWAV_ENABLE_LOOPBACK
   Input::start();
   ma_device_start(device);
+#else
+  throw std::runtime_error("syncwav was compiled without loopback support. "
+                           "loopback input is disabled.");
+#endif
 }
 
 LoopbackInput::~LoopbackInput() {
+#ifdef SWAV_ENABLE_LOOPBACK
   Input::stop();
   if (device) {
     ma_device_uninit(device);
     delete device;
   }
+#endif
 }
 } // namespace swav

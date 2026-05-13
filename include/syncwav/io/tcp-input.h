@@ -2,8 +2,11 @@
 #include "../export.h"
 #include "input.h"
 #include <atomic>
-#include <ixwebsocket/IXWebSocket.h>
 #include <miniaudio.h>
+
+#ifdef SWAV_USE_WEBSOCKETS
+#include <ixwebsocket/IXWebSocket.h>
+#endif
 
 namespace swav {
 class SWAV_API TCPInput : public Input {
@@ -18,9 +21,12 @@ private:
 
 private:
   std::atomic<bool> running{false};
-  ix::WebSocket *websocket = nullptr;
   const char *ip;
   int port;
+
+#ifdef SWAV_USE_WEBSOCKETS
   std::thread congestionThread;
+  ix::WebSocket *websocket = nullptr;
+#endif
 };
 } // namespace swav
