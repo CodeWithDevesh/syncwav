@@ -4,6 +4,7 @@
 #include <syncwav/io/loopback-input.h>
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
+#include <stdexcept>
 
 namespace swav {
 LoopbackInput::LoopbackInput(Context &context, Device dev)

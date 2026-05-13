@@ -1,16 +1,23 @@
 #include <chrono>
 #include <stdexcept>
-#include <syncwav/backend/ffmpeg/format.h>
 #include <syncwav/context.h>
 #include <syncwav/io/file-input.h>
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
 #include <thread>
 
+#ifdef SWAV_USE_FFMPEG
+#include <syncwav/backend/ffmpeg/format.h>
+#endif
+
 namespace swav {
 
 FileAudioInput::FileAudioInput(Context &context, const char *filePath)
     : Input("File Input", context) {
+
+  running = false;
+
+#ifdef SWAV_USE_FFMPEG
   fmtCtx = nullptr;
   swrCtx = nullptr;
   if (avformat_open_input(&fmtCtx, filePath, nullptr, nullptr) < 0)
@@ -41,16 +48,21 @@ FileAudioInput::FileAudioInput(Context &context, const char *filePath)
 
   packet = av_packet_alloc();
   frame = av_frame_alloc();
-  running = false;
+#else
+  throw std::runtime_error(
+      "syncwav was compiled without FFmpeg support. File input is disabled.");
+#endif
 }
 
 FileAudioInput::~FileAudioInput() {
   stop();
+#ifdef SWAV_USE_FFMPEG
   av_frame_free(&frame);
   av_packet_free(&packet);
   swr_free(&swrCtx);
   avcodec_free_context(&codecCtx);
   avformat_close_input(&fmtCtx);
+#endif
 }
 
 void FileAudioInput::start() {
@@ -71,6 +83,7 @@ void FileAudioInput::stop() {
 }
 
 void FileAudioInput::run() {
+#ifdef SWAV_USE_FFMPEG
   while (running && av_read_frame(fmtCtx, packet) >= 0) {
     if (packet->stream_index == streamIndex) {
       avcodec_send_packet(codecCtx, packet);
@@ -89,7 +102,7 @@ void FileAudioInput::run() {
             swrCtx, outData, outNbSamples,
             (const uint8_t **)frame->extended_data, frame->nb_samples);
 
-        while (availableWrite() < samplesConverted) {
+        while (availableWrite() < static_cast<uint32_t>(samplesConverted)) {
           std::this_thread::sleep_for(std::chrono::milliseconds(1));
           if (!running)
             break;
@@ -101,5 +114,6 @@ void FileAudioInput::run() {
     }
     av_packet_unref(packet);
   }
+#endif
 }
 } // namespace swav

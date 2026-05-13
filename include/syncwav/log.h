@@ -1,13 +1,31 @@
 #pragma once
 #include "export.h"
+
+// 1. Only include spdlog headers if the feature is enabled
+#ifdef SWAV_USE_SPDLOG
 #include <memory>
 #include <spdlog/async.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
-
+#endif
 
 namespace swav {
 namespace log {
+
+// The enum is always available so external code doesn't break
+enum class LogLevel {
+  TRACE,
+  DEBUG,
+  INFO,
+  WARN,
+  ERR
+};
+
+// ============================================================================
+// ACTIVE LOGGING IMPLEMENTATION
+// ============================================================================
+#ifdef SWAV_USE_SPDLOG
+
 class SWAV_API Logger {
 public:
   static std::shared_ptr<spdlog::logger> &get() {
@@ -27,7 +45,7 @@ private:
     sink->set_pattern("[%T.%e] [%^%l%$] %v");
 
     auto logger = std::make_shared<spdlog::async_logger>(
-        "syncwave", sink, spdlog::thread_pool(),
+        "syncwav", sink, spdlog::thread_pool(),
         spdlog::async_overflow_policy::block);
 
     logger->set_level(spdlog::level::warn);
@@ -36,33 +54,14 @@ private:
   }
 };
 
-enum class LogLevel {
-  TRACE,
-  DEBUG,
-  INFO,
-  WARN,
-  ERR
-};
-
 inline void setLogLevel(LogLevel level) {
   switch (level) {
-  case LogLevel::TRACE:
-    Logger::get()->set_level(spdlog::level::trace);
-    break;
-  case LogLevel::DEBUG:
-    Logger::get()->set_level(spdlog::level::debug);
-    break;
-  case LogLevel::INFO:
-    Logger::get()->set_level(spdlog::level::info);
-    break;
-  case LogLevel::WARN:
-    Logger::get()->set_level(spdlog::level::warn);
-    break;
-  case LogLevel::ERR:
-    Logger::get()->set_level(spdlog::level::err);
-    break;
-  default:
-    Logger::get()->set_level(spdlog::level::info);
+  case LogLevel::TRACE: Logger::get()->set_level(spdlog::level::trace); break;
+  case LogLevel::DEBUG: Logger::get()->set_level(spdlog::level::debug); break;
+  case LogLevel::INFO:  Logger::get()->set_level(spdlog::level::info);  break;
+  case LogLevel::WARN:  Logger::get()->set_level(spdlog::level::warn);  break;
+  case LogLevel::ERR:   Logger::get()->set_level(spdlog::level::err);   break;
+  default:              Logger::get()->set_level(spdlog::level::info);
   }
 };
 
@@ -91,5 +90,25 @@ template <typename... Args>
 inline void t(fmt::format_string<Args...> fmt, Args &&...args) {
   Logger::get()->trace(fmt, std::forward<Args>(args)...);
 }
-}; // namespace log
-}; // namespace swav
+
+// ============================================================================
+// DISABLED LOGGING IMPLEMENTATION (Zero Overhead Fallbacks)
+// ============================================================================
+#else
+
+// These generic templates consume any arguments passed to the log functions 
+// and do absolutely nothing. The compiler will completely erase these calls 
+// during optimization, meaning your audio thread runs at maximum speed.
+
+inline void setLogLevel([[maybe_unused]] LogLevel level) {}
+
+template <typename... Args> constexpr void d(Args&&...) {}
+template <typename... Args> constexpr void i(Args&&...) {}
+template <typename... Args> constexpr void w(Args&&...) {}
+template <typename... Args> constexpr void e(Args&&...) {}
+template <typename... Args> constexpr void t(Args&&...) {}
+
+#endif
+
+} // namespace log
+} // namespace swav

@@ -1,9 +1,9 @@
-#include "syncwav/format.h"
 #include <syncwav/context.h>
 #include <syncwav/io/input.h>
 #include <syncwav/log.h>
 #include <syncwav/tick/tick-producer.h>
 #include <syncwav/backend/miniaudio/format.h>
+#include <cstring>
 
 namespace swav {
 

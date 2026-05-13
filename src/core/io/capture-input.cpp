@@ -4,6 +4,7 @@
 #include <syncwav/io/capture-input.h>
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
+#include <stdexcept>
 
 namespace swav {
 CaptureInput::CaptureInput(Context &context, Device device_info)

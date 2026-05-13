@@ -16,8 +16,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # ==============================================================================
 option(SWAV_ENABLE_LOGGING "Enable spdlog for internal logging" ON)
 option(SWAV_ENABLE_WEBSOCKETS "Enable ixWebSocket remote control/streaming" ON)
+option(SWAV_ENABLE_FFMPEG "Enable ffmpeg for file io" ON)
 option(SWAV_BUILD_CLI "Build the Command Line Interface executable" ON)
 option(SWAV_BUILD_TUI "Build the Terminal UI executable" ON)
+option(SWAV_STRICT_WARNINGS
+       "Enable strict compiler warnings (-Wall -Wextra -Wpedantic)" ON)
 
 # ==============================================================================
 # SYSTEM DEPENDENCIES
@@ -37,10 +40,11 @@ add_subdirectory(external)
 # ==============================================================================
 # Strict Warnings Target
 add_library(syncwav_warnings INTERFACE)
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-  target_compile_options(syncwav_warnings INTERFACE -Wall -Wextra -Wpedantic)
+if(SWAV_STRICT_WARNINGS)
+  if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    target_compile_options(syncwav_warnings INTERFACE -Wall -Wextra -Wpedantic)
+  endif()
 endif()
-
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
      "${PROJECT_SOURCE_DIR}/src/core/*.cpp")
 
@@ -72,30 +76,33 @@ if(ZLIB_FOUND)
   target_compile_definitions(syncwav_core PUBLIC SWAV_USE_ZLIB)
 endif()
 
-# --- Graceful FFmpeg Implementation ---
-if(NOT WIN32)
-  find_package(PkgConfig REQUIRED)
-  pkg_check_modules(FFMPEG IMPORTED_TARGET libavformat libavcodec libavutil
-                    libswresample)
+# --- FFmpeg Setup ---
+if(SWAV_ENABLE_FFMPEG)
+  if(NOT WIN32)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(FFMPEG IMPORTED_TARGET libavformat libavcodec libavutil
+                      libswresample)
 
-  if(FFMPEG_FOUND)
-    target_link_libraries(syncwav_core PUBLIC PkgConfig::FFMPEG)
-    target_compile_definitions(syncwav_core PUBLIC SWAV_USE_FFMPEG)
+    if(FFMPEG_FOUND)
+      target_link_libraries(syncwav_core PUBLIC PkgConfig::FFMPEG)
+      target_compile_definitions(syncwav_core PUBLIC SWAV_USE_FFMPEG)
+    else()
+      message(WARNING "FFmpeg not found via pkg-config. File input disabled.")
+    endif()
   else()
-    message(WARNING "FFmpeg not found via pkg-config. File input disabled.")
-  endif()
-else()
-  set(FFMPEG_ROOT
-      "C:/Program Files/FFmpeg"
-      CACHE PATH "Path to FFmpeg installation")
-  if(EXISTS "${FFMPEG_ROOT}/include")
-    target_include_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/include")
-    target_link_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/lib")
-    target_link_libraries(syncwav_core PUBLIC avformat avcodec avutil
-                                              swresample)
-    target_compile_definitions(syncwav_core PUBLIC SWAV_USE_FFMPEG)
-  else()
-    message(WARNING "FFmpeg not found at ${FFMPEG_ROOT}. File input disabled.")
+    set(FFMPEG_ROOT
+        "C:/Program Files/FFmpeg"
+        CACHE PATH "Path to FFmpeg installation")
+    if(EXISTS "${FFMPEG_ROOT}/include")
+      target_include_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/include")
+      target_link_directories(syncwav_core PUBLIC "${FFMPEG_ROOT}/lib")
+      target_link_libraries(syncwav_core PUBLIC avformat avcodec avutil
+                                                swresample)
+      target_compile_definitions(syncwav_core PUBLIC SWAV_USE_FFMPEG)
+    else()
+      message(
+        WARNING "FFmpeg not found at ${FFMPEG_ROOT}. File input disabled.")
+    endif()
   endif()
 endif()
 
@@ -119,40 +126,47 @@ if(SWAV_BUILD_TUI)
                         syncwav_warnings)
 endif()
 
-
 # ==============================================================================
 # BUILD CONFIGURATION SUMMARY
 # ==============================================================================
+# Determine true FFmpeg state based on previous find_package/path checks
+set(ACTUAL_FFMPEG_STATE "OFF")
+if(SWAV_ENABLE_FFMPEG)
+    if((NOT WIN32 AND FFMPEG_FOUND) OR (WIN32 AND EXISTS "${FFMPEG_ROOT}/include"))
+        set(ACTUAL_FFMPEG_STATE "ON")
+    else()
+        set(ACTUAL_FFMPEG_STATE "OFF (Requested, but not found)")
+    endif()
+endif()
+
+set(ACTUAL_ZLIB_STATE "OFF")
+if(ZLIB_FOUND)
+    set(ACTUAL_ZLIB_STATE "ON")
+endif()
+
+set(DISPLAY_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
+if(NOT DISPLAY_BUILD_TYPE)
+    set(DISPLAY_BUILD_TYPE "Default (None)")
+endif()
+
 message(STATUS "")
 message(STATUS "=======================================================")
-message(STATUS " syncwav v${PROJECT_VERSION} - Build Configuration Summary")
+message(STATUS " syncwav v${PROJECT_VERSION} - Build Summary")
 message(STATUS "=======================================================")
+message(STATUS " System          : ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_PROCESSOR})")
 message(STATUS " Compiler        : ${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}")
-message(STATUS " Build Type      : ${CMAKE_BUILD_TYPE}")
-message(STATUS "")
-message(STATUS " --- Core Features ---")
+message(STATUS " Build Type      : ${DISPLAY_BUILD_TYPE}")
+message(STATUS " Strict Warnings : ${SWAV_STRICT_WARNINGS}")
+message(STATUS "-------------------------------------------------------")
+message(STATUS " --- Core Architecture ---")
 message(STATUS " Internal Logging (spdlog) : ${SWAV_ENABLE_LOGGING}")
 message(STATUS " WebSockets (ixWebSocket)  : ${SWAV_ENABLE_WEBSOCKETS}")
-message(STATUS "")
-message(STATUS " --- Executables ---")
-message(STATUS " Build CLI (syncwav_cli)   : ${SWAV_BUILD_CLI}")
-message(STATUS " Build TUI (syncwav_tui)   : ${SWAV_BUILD_TUI}")
-message(STATUS "")
-message(STATUS " --- Optional Dependencies ---")
-
-# Evaluate FFmpeg status based on the platform checks we did earlier
-if(SWAV_USE_FFMPEG)
-    message(STATUS " FFmpeg (File Input)       : ON")
-else()
-    message(STATUS " FFmpeg (File Input)       : OFF")
-endif()
-
-if(ZLIB_FOUND)
-    message(STATUS " ZLIB (Compression)        : ON")
-else()
-    message(STATUS " ZLIB (Compression)        : OFF")
-endif()
-
+message(STATUS " File Input (FFmpeg)       : ${ACTUAL_FFMPEG_STATE}")
+message(STATUS " Compression (ZLIB)        : ${ACTUAL_ZLIB_STATE}")
+message(STATUS "-------------------------------------------------------")
+message(STATUS " --- Build Targets ---")
+message(STATUS " Command Line (syncwav_cli): ${SWAV_BUILD_CLI}")
+message(STATUS " Terminal UI  (syncwav_tui): ${SWAV_BUILD_TUI}")
 message(STATUS "=======================================================")
 message(STATUS " Configure finished. Ready to build!")
 message(STATUS "")

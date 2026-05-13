@@ -7,6 +7,7 @@
 #include <syncwav/io/output.h>
 #include <syncwav/log.h>
 #include <syncwav/backend/miniaudio/format.h>
+#include <chrono>
 
 namespace swav {
 
