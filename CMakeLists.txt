@@ -17,11 +17,11 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 option(SWAV_ENABLE_LOGGING "Enable spdlog for internal logging" ON)
 option(SWAV_ENABLE_WEBSOCKETS "Enable ixWebSocket remote control/streaming" ON)
 option(SWAV_ENABLE_FFMPEG "Enable ffmpeg for file io" ON)
+option(SWAV_ENABLE_LOOPBACK "Enable loopback input mode" ON)
 option(SWAV_BUILD_CLI "Build the Command Line Interface executable" ON)
 option(SWAV_BUILD_TUI "Build the Terminal UI executable" ON)
 option(SWAV_STRICT_WARNINGS
        "Enable strict compiler warnings (-Wall -Wextra -Wpedantic)" ON)
-option(SWAV_ENABLE_LOOPBACK "Enable loopback input mode" ON)
 # ==============================================================================
 # SYSTEM DEPENDENCIES
 # ==============================================================================
@@ -175,6 +175,7 @@ message(STATUS " --- Core Architecture ---")
 message(STATUS " Internal Logging (spdlog) : ${SWAV_ENABLE_LOGGING}")
 message(STATUS " WebSockets (ixWebSocket)  : ${SWAV_ENABLE_WEBSOCKETS}")
 message(STATUS " File Input (FFmpeg)       : ${ACTUAL_FFMPEG_STATE}")
+message(STATUS " Loopback Input (windows (wasapi)): ${SWAV_ENABLE_LOOPBACK}")
 message(STATUS " Compression (ZLIB)        : ${ACTUAL_ZLIB_STATE}")
 message(STATUS "-------------------------------------------------------")
 message(STATUS " --- Build Targets ---")
