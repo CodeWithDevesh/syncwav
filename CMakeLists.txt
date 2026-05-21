@@ -22,6 +22,8 @@ option(SWAV_BUILD_CLI "Build the Command Line Interface executable" ON)
 option(SWAV_BUILD_TUI "Build the Terminal UI executable" ON)
 option(SWAV_STRICT_WARNINGS
        "Enable strict compiler warnings (-Wall -Wextra -Wpedantic)" ON)
+option(SWAV_BUILD_SHARED
+       "Build syncwav_core as a shared library (OFF for static)" ON)
 # ==============================================================================
 # SYSTEM DEPENDENCIES
 # ==============================================================================
@@ -29,7 +31,7 @@ find_package(Threads REQUIRED)
 find_package(ZLIB)
 
 if(SWAV_ENABLE_WEBSOCKETS)
-  find_package(OpenSSL REQUIRED)
+  find_package(OpenSSL)
 endif()
 
 # Load the external directory (which relies on the feature flags above)
@@ -48,11 +50,20 @@ endif()
 file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
      "${PROJECT_SOURCE_DIR}/src/core/*.cpp")
 
-add_library(syncwav_core SHARED ${CORE_SOURCES})
-add_library(syncwav::core ALIAS syncwav_core) # Namespace alias for cleaner
-                                              # linking
+# set static of shared build type
+if(SWAV_BUILD_SHARED)
+  set(CORE_LIB_TYPE SHARED)
+else()
+  set(CORE_LIB_TYPE STATIC)
+endif()
 
-target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
+add_library(syncwav_core ${CORE_LIB_TYPE} ${CORE_SOURCES})
+add_library(syncwav::core ALIAS syncwav_core)
+
+if(SWAV_BUILD_SHARED)
+  target_compile_definitions(syncwav_core PRIVATE SWAV_BUILD_DLL)
+endif()
+
 target_include_directories(
   syncwav_core PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>)
 
