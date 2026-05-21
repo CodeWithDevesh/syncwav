@@ -80,7 +80,7 @@ bool setInput(swav::Context &context, CliConfig &config) {
     swav::Device captureDevice = swav::getDefaultCaptureDevice();
     if (config.inputDevice != -1) {
       std::vector<swav::Device> devices = swav::getCaptureDevices();
-      if (devices.size() <= config.inputDevice)
+      if ((int)devices.size() <= config.inputDevice)
         return false;
       captureDevice = devices[config.inputDevice];
     }
@@ -100,7 +100,6 @@ bool setInput(swav::Context &context, CliConfig &config) {
 }
 
 bool setOutputs(swav::Context &context, CliConfig &config) {
-
   for (auto omode : config.outputs) {
     switch (omode) {
     case OUTPUT_MODE::LOCAL: {
@@ -110,7 +109,7 @@ bool setOutputs(swav::Context &context, CliConfig &config) {
       } else {
         std::vector<swav::Device> devices = swav::getPlaybackDevices();
         for (auto deviceId : config.outputDevices) {
-          if (deviceId >= devices.size()) {
+          if (deviceId >= (int)devices.size()) {
             return false;
           }
           swav::addOutput(context, swav::LocalOutputFactory(devices[deviceId]));
